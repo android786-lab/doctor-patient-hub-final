@@ -294,9 +294,10 @@ export async function fetchDoctorSchedule(contextUserId) {
   if (!doctorRowId) throw new Error('Doctor profile not found')
 
   const attempts = [
-    'weekly_schedule, slot_duration_minutes, slots_booked, is_active, available',
-    'slots_booked, is_active, available',
-    'is_active, available',
+    'weekly_schedule, slot_duration_minutes, slots_booked, is_active',
+    'weekly_schedule, slot_duration_minutes, is_active',
+    'is_active',
+    'id',
   ]
 
   let row = null

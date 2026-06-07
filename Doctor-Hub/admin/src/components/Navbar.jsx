@@ -22,8 +22,8 @@ function roleLabel(role) {
 }
 
 export default function Navbar({ onMenuClick }) {
-  const { aToken, backendUrl, clearAdminSession } = useContext(AdminContext)
-  const { dToken, clearDoctorSession } = useContext(DoctorContext)
+  const { aToken, backendUrl } = useContext(AdminContext)
+  const { dToken } = useContext(DoctorContext)
   const navigate = useNavigate()
   const location = useLocation()
   const [assignedDoctor, setAssignedDoctor] = useState(null)
@@ -53,8 +53,6 @@ export default function Navbar({ onMenuClick }) {
   }, [staffRole, aToken, backendUrl])
 
   const logout = () => {
-    clearDoctorSession()
-    clearAdminSession()
     goToPublicLanding()
   }
 

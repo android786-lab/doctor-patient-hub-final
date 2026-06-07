@@ -21,9 +21,7 @@ const DOCTOR_SELECT = `
   is_active,
   profile_image,
   weekly_schedule,
-  slot_duration_minutes,
-  available,
-  slots_booked
+  slot_duration_minutes
 `
 
 const DEFAULT_IMAGE =
@@ -90,13 +88,13 @@ function isMissingColumn(err) {
 const DOCTOR_SELECT_FALLBACKS = [
   DOCTOR_SELECT,
   `id, user_id, full_name, specialization, treatment_type, diseases, bio,
-   consultation_fee, experience_years, is_verified, is_active, profile_image,
-   available, slots_booked`,
-  'id, user_id, full_name, specialization, bio, consultation_fee, is_verified, is_active, profile_image',
+   consultation_fee, experience_years, is_verified, is_active, profile_image`,
+  `id, user_id, full_name, specialization, bio, consultation_fee, is_verified, profile_image`,
+  `id, user_id, full_name, specialization, bio, consultation_fee, is_verified`,
 ]
 
 export async function fetchDoctorRows() {
-  let rows = []
+  let rows = null
   let lastError = null
   for (const columns of DOCTOR_SELECT_FALLBACKS) {
     const { data, error } = await supabase.from('doctors').select(columns)
@@ -107,7 +105,7 @@ export async function fetchDoctorRows() {
     lastError = error
     if (!isMissingColumn(error)) throw error
   }
-  if (!rows.length && lastError) throw lastError
+  if (rows === null) throw lastError || new Error('Failed to load doctors')
   return attachClinics(rows)
 }
 

@@ -18,8 +18,8 @@ function normalizeAddress(addr) {
 
 const SELECT_ATTEMPTS = [
   `id, user_id, full_name, email, name, image, profile_image, speciality, specialization,
-   degree, experience, experience_years, about, bio, available, is_active, fees,
-   consultation_fee, slots_booked, address, date, is_verified`,
+   degree, experience, experience_years, about, bio, is_active, fees,
+   consultation_fee, address, date, is_verified`,
   'id, user_id, full_name, specialization, bio, consultation_fee, experience_years, profile_image, is_active, is_verified, address',
   'id, user_id, full_name, specialization, bio, consultation_fee, experience_years, is_verified',
   '*',

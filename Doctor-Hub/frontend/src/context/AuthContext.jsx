@@ -67,7 +67,13 @@ export function AuthProvider({ children }) {
       if (data.success) setDoctors(data.doctors)
       else if (data.message) toast.error(data.message)
     } catch (error) {
-      if (!error.isAuthError && !error.isNetworkError) toast.error(error.message)
+      if (!error.isAuthError && !error.isNetworkError) {
+        const msg = error.message || ''
+        const friendly = /column|does not exist|schema cache/i.test(msg)
+          ? 'Could not load doctors. Please try again in a moment.'
+          : msg
+        toast.error(friendly)
+      }
     }
   }
 

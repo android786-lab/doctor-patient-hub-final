@@ -10,7 +10,7 @@ export default function NotFound() {
   const role = aToken ? roleFromToken(aToken) : dToken ? 'doctor' : null
 
   let homeTo = '/'
-  let homeLabel = 'Sign in'
+  let homeLabel = 'Back to login'
   if (role === 'doctor') {
     homeTo = '/doctor/dashboard'
     homeLabel = 'Doctor dashboard'
