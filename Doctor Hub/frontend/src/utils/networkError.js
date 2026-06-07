@@ -16,5 +16,6 @@ export function notifyNetworkErrorOnce() {
   return true
 }
 
-export const NETWORK_ERROR_HINT =
-  'Backend not reachable. From project folder run: npm run dev (API should be on http://localhost:4000)'
+export const NETWORK_ERROR_HINT = import.meta.env.PROD
+  ? 'Backend not reachable. Check VITE_BACKEND_URL and that the API is deployed.'
+  : 'Backend not reachable. From project folder run: npm run dev (API should be on http://localhost:4000)'

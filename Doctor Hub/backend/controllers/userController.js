@@ -1,5 +1,5 @@
 import bcrypt from 'bcrypt'
-import { v2 as cloudinary } from 'cloudinary'
+import { uploadImageFile } from '../src/utils/imageUpload.js'
 import jwt from 'jsonwebtoken'
 import Stripe from 'stripe'
 import validator from 'validator'
@@ -87,8 +87,7 @@ const updateProfile = async (req, res) => {
         const updates = { name, phone, address: JSON.parse(address), dob, gender }
 
         if (imageFile) {
-            const imageUpload = await cloudinary.uploader.upload(imageFile.path, { resource_type: 'image' })
-            updates.image = imageUpload.secure_url
+            updates.image = await uploadImageFile(imageFile, { folder: 'doctor-hub/profiles' })
         }
 
         const { error } = await supabase.from('users').update(updates).eq('id', userId)

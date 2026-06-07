@@ -44,7 +44,9 @@ client.interceptors.response.use(
       if (now - lastNetworkToastAt > 12000) {
         lastNetworkToastAt = now
         toast.error(
-          'Backend not reachable. Run npm run dev from Doctor Hub folder (API on http://localhost:4000).'
+          import.meta.env.PROD
+            ? 'Backend not reachable. Check VITE_BACKEND_URL and that the API is deployed.'
+            : 'Backend not reachable. Run npm run dev from Doctor Hub folder (API on http://localhost:4000).'
         )
       }
     }

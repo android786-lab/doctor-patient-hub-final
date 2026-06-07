@@ -1,6 +1,7 @@
 import axiosClient from '../lib/axiosClient'
 import { createContext, useState } from 'react'
 import { toast } from 'react-toastify'
+import { API_BASE_URL } from '../utils/constants.js'
 
 export const AdminContext = createContext()
 
@@ -13,7 +14,8 @@ function readAdminToken() {
 
 const AdminContextProvider = (props) => {
   const [aToken, setAToken] = useState(readAdminToken)
-  const backendUrl = import.meta.env.VITE_BACKEND_URL
+  const backendUrl =
+    import.meta.env.VITE_BACKEND_URL || API_BASE_URL.replace(/\/api$/, '')
   const [appointments, setAppointments] = useState([])
   const [doctors, setDoctors] = useState([])
   const [dashData, setDashData] = useState(false)

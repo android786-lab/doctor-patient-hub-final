@@ -3,6 +3,7 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 import supabase from '../config/supabase.js'
 import { localPatientReportUrl } from '../../middlewares/patientReportUpload.js'
+import { uploadImageFile } from '../utils/imageUpload.js'
 import {
   resolvePatientId,
   insertMedicalHistory,
@@ -303,9 +304,20 @@ export async function uploadPatientReport(req, res) {
 
     const attachments = []
     for (const file of files) {
-      const url = localPatientReportUrl(file)
-      if (!url) {
-        return res.status(500).json({ message: 'Could not save report on server. Try again.' })
+      let url = null
+      if (process.env.VERCEL === '1') {
+        try {
+          url = await uploadImageFile(file, { folder: 'doctor-hub/patient-reports' })
+        } catch (uploadErr) {
+          return res.status(500).json({
+            message: uploadErr.message || 'Could not save report on server. Try again.',
+          })
+        }
+      } else {
+        url = localPatientReportUrl(file)
+        if (!url) {
+          return res.status(500).json({ message: 'Could not save report on server. Try again.' })
+        }
       }
       attachments.push({
         url,

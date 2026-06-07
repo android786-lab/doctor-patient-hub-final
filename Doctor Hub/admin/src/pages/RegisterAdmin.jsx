@@ -3,12 +3,14 @@ import { Link } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import axiosClient from '../lib/axiosClient'
 import BrandLogo from '../components/BrandLogo'
+import { API_BASE_URL } from '../utils/constants.js'
 
 const SUCCESS_MSG =
   'Your registration request has been sent to the super admin for approval. You will be notified once approved — then sign in here with your email and password.'
 
 export default function RegisterAdmin() {
-  const backendUrl = import.meta.env.VITE_BACKEND_URL
+  const backendUrl =
+    import.meta.env.VITE_BACKEND_URL || API_BASE_URL.replace(/\/api$/, '')
   const [form, setForm] = useState({
     full_name: '',
     email: '',

@@ -6,20 +6,25 @@ import { fileURLToPath } from 'url'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 export const PAYMENTS_UPLOAD_DIR = path.join(__dirname, '..', 'uploads', 'payments')
 
-fs.mkdirSync(PAYMENTS_UPLOAD_DIR, { recursive: true })
+if (process.env.VERCEL !== '1') {
+  fs.mkdirSync(PAYMENTS_UPLOAD_DIR, { recursive: true })
+}
 
 const ALLOWED_MIME = new Set(['image/jpeg', 'image/jpg', 'image/png'])
 const MAX_BYTES = 5 * 1024 * 1024
 
-const storage = multer.diskStorage({
-  destination(_req, _file, cb) {
-    cb(null, PAYMENTS_UPLOAD_DIR)
-  },
-  filename(_req, file, cb) {
-    const ext = file.mimetype === 'image/png' ? '.png' : '.jpg'
-    cb(null, `${Date.now()}-${Math.random().toString(36).slice(2, 10)}${ext}`)
-  },
-})
+const storage =
+  process.env.VERCEL === '1'
+    ? multer.memoryStorage()
+    : multer.diskStorage({
+        destination(_req, _file, cb) {
+          cb(null, PAYMENTS_UPLOAD_DIR)
+        },
+        filename(_req, file, cb) {
+          const ext = file.mimetype === 'image/png' ? '.png' : '.jpg'
+          cb(null, `${Date.now()}-${Math.random().toString(36).slice(2, 10)}${ext}`)
+        },
+      })
 
 const paymentScreenshotUpload = multer({
   storage,

@@ -1,12 +1,14 @@
 import { createContext } from 'react'
 import { formatMoney } from '../../../shared/constants/currency.js'
+import { API_BASE_URL } from '../utils/constants.js'
 
 export const AppContext = createContext()
 
 const AppContextProvider = (props) => {
 
     const currency = import.meta.env.VITE_CURRENCY || 'Rs'
-    const backendUrl = import.meta.env.VITE_BACKEND_URL
+    const backendUrl =
+      import.meta.env.VITE_BACKEND_URL || API_BASE_URL.replace(/\/api$/, '')
 const months = [" ","Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
     // Function to format the date eg. ( 20_01_2000 => 20 Jan 2000 )

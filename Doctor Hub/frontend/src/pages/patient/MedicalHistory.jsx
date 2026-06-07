@@ -3,21 +3,9 @@ import { useCallback, useEffect, useState } from 'react'
 import { toast } from 'react-toastify'
 
 import api from '../../services/api.js'
-
+import { API_BASE_URL } from '../../utils/constants.js'
 import PageHeader from '../../components/layout/PageHeader.jsx'
 import { downloadHistoryAttachment } from '../../utils/downloadAttachment.js'
-
-
-
-const API_BASE =
-
-  import.meta.env.VITE_API_URL ||
-
-  (import.meta.env.VITE_BACKEND_URL
-
-    ? `${import.meta.env.VITE_BACKEND_URL.replace(/\/$/, '')}/api`
-
-    : 'http://localhost:4000/api')
 
 
 
@@ -340,7 +328,7 @@ export default function MedicalHistory() {
 
       const token = localStorage.getItem('token')
 
-      const res = await fetch(`${API_BASE}/history/${historyId}/prescription.pdf`, {
+      const res = await fetch(`${API_BASE_URL}/history/${historyId}/prescription.pdf`, {
 
         credentials: 'include',
 

@@ -6,7 +6,9 @@ import { fileURLToPath } from 'url'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 export const PATIENT_REPORTS_DIR = path.join(__dirname, '..', 'uploads', 'patient-reports')
 
-fs.mkdirSync(PATIENT_REPORTS_DIR, { recursive: true })
+if (process.env.VERCEL !== '1') {
+  fs.mkdirSync(PATIENT_REPORTS_DIR, { recursive: true })
+}
 
 const ALLOWED_MIME = new Set([
   'image/jpeg',
@@ -27,19 +29,22 @@ function extForFile(file) {
   return '.jpg'
 }
 
-const storage = multer.diskStorage({
-  destination(_req, _file, cb) {
-    cb(null, PATIENT_REPORTS_DIR)
-  },
-  filename(_req, file, cb) {
-    const ext = extForFile(file)
-    const base = path
-      .basename(file.originalname || 'report', ext)
-      .replace(/[^a-zA-Z0-9._-]+/g, '_')
-      .slice(0, 80)
-    cb(null, `${Date.now()}-${Math.random().toString(36).slice(2, 10)}-${base || 'report'}${ext}`)
-  },
-})
+const storage =
+  process.env.VERCEL === '1'
+    ? multer.memoryStorage()
+    : multer.diskStorage({
+        destination(_req, _file, cb) {
+          cb(null, PATIENT_REPORTS_DIR)
+        },
+        filename(_req, file, cb) {
+          const ext = extForFile(file)
+          const base = path
+            .basename(file.originalname || 'report', ext)
+            .replace(/[^a-zA-Z0-9._-]+/g, '_')
+            .slice(0, 80)
+          cb(null, `${Date.now()}-${Math.random().toString(36).slice(2, 10)}-${base || 'report'}${ext}`)
+        },
+      })
 
 const patientReportUpload = multer({
   storage,

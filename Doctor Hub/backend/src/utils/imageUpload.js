@@ -130,7 +130,7 @@ async function uploadToSupabaseStorage(file, folder) {
 export async function uploadPaymentProof(file) {
   if (!file) throw new Error('Image file is required')
 
-  const localPath = localPaymentProofUrl(file)
+  const localPath = process.env.VERCEL !== '1' ? localPaymentProofUrl(file) : null
   if (localPath) {
     const base =
       process.env.API_PUBLIC_URL ||

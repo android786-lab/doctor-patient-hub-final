@@ -55,14 +55,25 @@ const port = process.env.PORT || 4000
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
+function normalizeOrigin(origin) {
+  return String(origin || '')
+    .trim()
+    .replace(/\/$/, '')
+}
+
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:5174',
   process.env.FRONTEND_URL,
   process.env.ADMIN_URL,
+  ...(process.env.CORS_ALLOWED_ORIGINS || '')
+    .split(',')
+    .map((o) => o.trim())
+    .filter(Boolean),
 ]
+  .map(normalizeOrigin)
   .filter(Boolean)
-  .map((o) => o.replace(/\/$/, ''))
+  .filter((o, i, arr) => arr.indexOf(o) === i)
 
 
 

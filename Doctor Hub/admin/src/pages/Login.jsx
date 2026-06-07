@@ -6,6 +6,7 @@ import { AdminContext } from '../context/AdminContext'
 import { toast } from 'react-toastify'
 import BrandLogo from '../components/BrandLogo'
 import { roleFromToken } from '../utils/staffRole.js'
+import { API_BASE_URL } from '../utils/constants.js'
 
 function staffHomePath(role) {
   if (role === 'assistant') return '/assistant/dashboard'
@@ -25,7 +26,8 @@ export default function Login() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
 
-  const backendUrl = import.meta.env.VITE_BACKEND_URL
+  const backendUrl =
+    import.meta.env.VITE_BACKEND_URL || API_BASE_URL.replace(/\/api$/, '')
   const { setDToken } = useContext(DoctorContext)
   const { setAToken } = useContext(AdminContext)
   const navigate = useNavigate()

@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken'
 import bcrypt from 'bcrypt'
 import validator from 'validator'
-import { v2 as cloudinary } from 'cloudinary'
+import { uploadImageFile } from '../src/utils/imageUpload.js'
 import supabase from '../config/supabaseClient.js'
 
 function signEnvStaffToken(role, email) {
@@ -77,12 +77,9 @@ const addDoctor = async (req, res) => {
 
         let imageUrl = DEFAULT_DOCTOR_IMAGE
         try {
-            const imageUpload = await cloudinary.uploader.upload(imageFile.path, {
-                resource_type: 'image',
-            })
-            imageUrl = imageUpload.secure_url
+            imageUrl = await uploadImageFile(imageFile, { folder: 'doctor-hub/doctors' })
         } catch (uploadErr) {
-            console.warn('Cloudinary upload skipped:', uploadErr.message)
+            console.warn('Doctor photo upload skipped:', uploadErr.message)
         }
 
         let parsedAddress = { line1: '', line2: '' }
