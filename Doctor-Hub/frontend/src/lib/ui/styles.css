@@ -152,6 +152,26 @@
     @apply min-h-screen bg-gradient-to-br from-slate-50 via-white to-teal-50/30;
   }
 
+  .dh-booking-panel {
+    @apply flex min-h-[360px] flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-md ring-1 ring-slate-100 sm:min-h-[420px];
+  }
+
+  .dh-visit-card {
+    @apply dh-portal-panel overflow-hidden transition hover:border-teal-200 hover:shadow-lg;
+  }
+
+  .dh-rx-card {
+    @apply dh-portal-panel border-l-4 border-l-teal-500 p-5;
+  }
+
+  .dh-chat-shell {
+    @apply dh-portal-panel flex min-h-[min(480px,calc(100vh-12rem))] flex-col overflow-hidden;
+  }
+
+  .dh-chat-header {
+    @apply border-b border-teal-100 bg-gradient-to-r from-teal-700 to-teal-900 px-4 py-4 text-white;
+  }
+
   /* Doctor / profile photos — one size everywhere */
   .dh-doctor-photo {
     @apply relative isolate shrink-0 overflow-hidden bg-gradient-to-br from-teal-50 to-slate-100;

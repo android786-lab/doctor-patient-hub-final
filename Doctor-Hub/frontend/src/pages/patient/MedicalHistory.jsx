@@ -4,7 +4,6 @@ import { toast } from 'react-toastify'
 
 import api from '../../services/api.js'
 import { API_BASE_URL } from '../../utils/constants.js'
-import PageHeader from '../../components/layout/PageHeader.jsx'
 import { downloadHistoryAttachment } from '../../utils/downloadAttachment.js'
 
 
@@ -155,7 +154,7 @@ function HistoryCard({ entry, onDownloadPdf }) {
 
       <span className="absolute left-0 top-1.5 h-2.5 w-2.5 rounded-full bg-teal-600 ring-2 ring-teal-100" />
 
-      <div className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-sm">
+      <div className="dh-visit-card p-4 shadow-sm">
 
         <div className="flex flex-wrap items-start justify-between gap-2">
 
@@ -438,14 +437,18 @@ export default function MedicalHistory() {
 
   return (
     <div className="w-full pb-10">
-      <PageHeader
-        eyebrow="Your health"
-        title="Medical history"
-        description="Read-only timeline of visits and your uploaded lab reports."
-      />
+      <div className="dh-portal-panel mb-8 overflow-hidden">
+        <div className="bg-gradient-to-r from-teal-700 to-teal-900 px-5 py-6 text-white sm:px-6">
+          <p className="text-xs font-bold uppercase tracking-widest text-teal-200">Clinical records</p>
+          <h1 className="mt-1 font-display text-xl font-semibold sm:text-2xl">Medical history</h1>
+          <p className="mt-2 text-sm text-teal-100">
+            Your protected visit timeline and uploaded lab reports — managed by hospital staff.
+          </p>
+        </div>
+      </div>
 
       <div className="grid gap-8 xl:grid-cols-[minmax(280px,380px)_1fr]">
-        <section className="dh-card h-fit border-teal-100/80 bg-gradient-to-br from-teal-50/80 to-white p-6">
+        <section className="dh-portal-panel h-fit border-teal-100/80 bg-gradient-to-br from-teal-50/50 to-white p-6">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-teal-600 text-lg text-white shadow-md shadow-teal-600/25">
             📄
           </div>
@@ -492,7 +495,7 @@ export default function MedicalHistory() {
               ))}
             </div>
           ) : history.length === 0 ? (
-            <div className="dh-card px-8 py-14 text-center">
+            <div className="dh-portal-panel px-8 py-14 text-center">
               <p className="font-display text-lg font-semibold text-slate-900">No medical history yet</p>
               <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">
                 After your doctor saves a record from a confirmed appointment, it will appear here.

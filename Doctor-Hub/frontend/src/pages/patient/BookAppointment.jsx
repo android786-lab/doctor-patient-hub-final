@@ -102,7 +102,7 @@ function BookingProgress({ step }) {
 function DoctorSummaryAside({ docInfo, formatMoney }) {
   const location = formatAddress(docInfo.address)
   return (
-    <aside className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm lg:sticky lg:top-24">
+    <aside className="dh-portal-panel overflow-hidden lg:sticky lg:top-24">
       <div className="relative">
         <DoctorPhoto src={docInfo.image} name={docInfo.name} variant="card" className="aspect-[4/3] w-full">
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-900/70 via-slate-900/20 to-transparent" />
@@ -149,10 +149,9 @@ function DoctorSummaryAside({ docInfo, formatMoney }) {
 
 function StepHeader({ step, title, description }) {
   return (
-    <div className="border-b border-slate-100 pb-5">
-      <p className="text-xs font-semibold uppercase tracking-wider text-teal-700">
-        Step {step} — {title}
-      </p>
+    <div className="dh-section-head border-b border-slate-100 pb-5">
+      <p className="dh-section-eyebrow">Step {step}</p>
+      <h3 className="mt-1 font-display text-lg font-semibold text-slate-900">{title}</h3>
       {description ? <p className="mt-2 max-w-xl text-sm text-slate-600">{description}</p> : null}
     </div>
   )
@@ -505,16 +504,16 @@ export default function BookAppointment() {
 
   return (
     <div className="pb-16">
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-teal-900 to-teal-700 px-6 py-8 text-white md:px-10">
+      <div className="dh-hero--clinical relative">
         <div className="absolute -right-20 -top-20 h-56 w-56 rounded-full bg-teal-400/20 blur-3xl" />
         <Link
           to={`/patient/doctor/${docId}`}
           className="relative inline-flex items-center gap-1 text-sm font-medium text-teal-100 hover:text-white"
         >
-          ← Back to profile
+          ← Back to specialist profile
         </Link>
         <div className="relative mt-4">
-          <p className="text-xs font-semibold uppercase tracking-widest text-teal-200">Book appointment</p>
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-teal-200">Outpatient booking</p>
           <h1 className="mt-1 font-display text-2xl font-semibold sm:text-3xl">Dr. {docInfo.name}</h1>
           <p className="mt-2 text-sm text-teal-100/90">
             {docInfo.speciality}
@@ -530,7 +529,7 @@ export default function BookAppointment() {
       <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(260px,300px)_minmax(0,1fr)] lg:gap-8">
         <DoctorSummaryAside docInfo={docInfo} formatMoney={formatMoney} />
 
-        <section className="flex min-h-[420px] flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+        <section className="dh-booking-panel">
           <div className="flex-1 p-6 sm:p-8">
             {step === 0 && (
               <div className="space-y-6">

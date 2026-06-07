@@ -1,8 +1,21 @@
-import { useContext, useEffect, useState } from 'react'
+import { useContext, useEffect, useMemo, useState } from 'react'
 import { toast } from 'react-toastify'
 import axiosClient from '../../lib/axiosClient'
 import { AdminContext } from '../../context/AdminContext'
 import PageHeader from '../../components/admin/PageHeader'
+import ClinicalDataList from '@doctor-hub/ui/ClinicalDataList.jsx'
+
+function VerifyBadge({ verified }) {
+  return (
+    <span
+      className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+        verified ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+      }`}
+    >
+      {verified ? 'Verified' : 'Unverified'}
+    </span>
+  )
+}
 
 export default function AdminDoctors() {
   const { aToken, backendUrl } = useContext(AdminContext)
@@ -49,6 +62,47 @@ export default function AdminDoctors() {
     }
   }
 
+  const renderActions = (doc) =>
+    doc.is_verified ? (
+      <button
+        type="button"
+        disabled={busyId === doc.id}
+        onClick={() => toggleVerify(doc, false)}
+        className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+      >
+        Unverify
+      </button>
+    ) : (
+      <button
+        type="button"
+        disabled={busyId === doc.id}
+        onClick={() => toggleVerify(doc, true)}
+        className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700"
+      >
+        Verify
+      </button>
+    )
+
+  const columns = useMemo(
+    () => [
+      { key: 'name', label: 'Name', render: (doc) => <span className="font-medium text-slate-900">{doc.name}</span> },
+      { key: 'email', label: 'Email', render: (doc) => doc.email || '—' },
+      { key: 'specialization', label: 'Specialization', render: (doc) => doc.specialization || '—' },
+      {
+        key: 'status',
+        label: 'Status',
+        render: (doc) => <VerifyBadge verified={doc.is_verified} />,
+      },
+      {
+        key: 'actions',
+        label: 'Actions',
+        align: 'right',
+        render: (doc) => renderActions(doc),
+      },
+    ],
+    [busyId]
+  )
+
   return (
     <div className="p-4 sm:p-5 lg:p-7">
       <PageHeader
@@ -64,63 +118,24 @@ export default function AdminDoctors() {
       {loading ? (
         <div className="h-40 animate-pulse rounded-xl bg-slate-200" />
       ) : (
-        <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <table className="min-w-full text-left text-sm">
-            <thead className="border-b border-slate-200 bg-slate-50 text-xs font-semibold uppercase text-slate-500">
-              <tr>
-                <th className="px-4 py-3">Name</th>
-                <th className="px-4 py-3">Email</th>
-                <th className="px-4 py-3">Specialization</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {doctors.map((doc) => (
-                <tr key={doc.id} className="hover:bg-slate-50/80">
-                  <td className="px-4 py-3 font-medium text-slate-900">{doc.name}</td>
-                  <td className="px-4 py-3 text-slate-600">{doc.email || '—'}</td>
-                  <td className="px-4 py-3 text-slate-600">{doc.specialization || '—'}</td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                        doc.is_verified
-                          ? 'bg-emerald-100 text-emerald-800'
-                          : 'bg-amber-100 text-amber-800'
-                      }`}
-                    >
-                      {doc.is_verified ? 'Verified' : 'Unverified'}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    {doc.is_verified ? (
-                      <button
-                        type="button"
-                        disabled={busyId === doc.id}
-                        onClick={() => toggleVerify(doc, false)}
-                        className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-                      >
-                        Unverify
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        disabled={busyId === doc.id}
-                        onClick={() => toggleVerify(doc, true)}
-                        className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700"
-                      >
-                        Verify
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {doctors.length === 0 && (
-            <p className="px-6 py-12 text-center text-sm text-slate-500">No doctors found.</p>
+        <ClinicalDataList
+          columns={columns}
+          rows={doctors}
+          emptyMessage="No doctors found."
+          mobileCard={(doc) => (
+            <article className="dh-portal-panel p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="font-semibold text-slate-900">{doc.name}</p>
+                  <p className="mt-0.5 text-sm text-slate-600">{doc.email || '—'}</p>
+                </div>
+                <VerifyBadge verified={doc.is_verified} />
+              </div>
+              <p className="mt-3 text-sm text-slate-600">{doc.specialization || '—'}</p>
+              <div className="mt-4 border-t border-slate-100 pt-3">{renderActions(doc)}</div>
+            </article>
           )}
-        </div>
+        />
       )}
     </div>
   )

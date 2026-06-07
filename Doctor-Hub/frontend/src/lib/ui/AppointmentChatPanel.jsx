@@ -219,7 +219,7 @@ export default function AppointmentChatPanel({
 
   if (loading) {
     return (
-      <div className="dh-card animate-pulse p-8 text-center text-sm text-slate-500">
+      <div className="dh-chat-shell animate-pulse p-8 text-center text-sm text-slate-500">
         Loading chat…
       </div>
     )
@@ -292,15 +292,15 @@ export default function AppointmentChatPanel({
         </div>
       ) : null}
 
-      <div className="dh-card flex min-h-[min(520px,calc(100vh-12rem))] flex-col overflow-hidden">
-        <div className="border-b border-slate-100 bg-slate-50 px-4 py-3">
-          <p className="text-xs font-semibold uppercase tracking-wide text-teal-700">
-            Appointment chat
+      <div className="dh-chat-shell flex min-h-[min(520px,calc(100vh-12rem))] flex-col overflow-hidden">
+        <div className="dh-chat-header px-4 py-3">
+          <p className="text-xs font-bold uppercase tracking-widest text-teal-200">
+            Secure consultation
           </p>
-          <h1 className="font-display text-lg font-semibold text-slate-900">
+          <h1 className="font-display text-lg font-semibold text-white">
             {session?.peerName || 'Consultation'}
           </h1>
-          <p className="mt-1 text-xs text-slate-500">
+          <p className="mt-1 text-xs text-teal-100">
             {session?.slotLabel ? `Slot: ${formatSlotLabel(session.slotLabel)}` : null}
             {session?.status ? ` · ${session.status}` : null}
           </p>

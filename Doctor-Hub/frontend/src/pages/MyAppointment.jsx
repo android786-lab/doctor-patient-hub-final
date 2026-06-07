@@ -4,7 +4,6 @@ import { Link } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import { AppContext } from '../context/AppContext'
 import DoctorPhoto from '@doctor-hub/ui/DoctorPhoto.jsx'
-import PageHeader from '../components/layout/PageHeader.jsx'
 import { getAppointmentStatus } from '../utils/appointmentStatus'
 import { ROUTES } from '../utils/constants.js'
 
@@ -76,7 +75,7 @@ function AppointmentCard({ item, formatMoney, onCancel }) {
     (!item.cancelled && !item.is_completed && item.status !== 'payment_uploaded')
 
   return (
-    <article className="dh-card shadow-sm transition hover:border-teal-200/80">
+    <article className="dh-visit-card shadow-sm">
       <div className="flex flex-col gap-2.5 p-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:p-4">
         <div className="flex min-w-0 items-center gap-3">
           <DoctorPhoto
@@ -197,23 +196,25 @@ export default function MyAppointments() {
 
   return (
     <div className="dh-page-inner">
-      <PageHeader
-        eyebrow="Patient"
-        title="My appointments"
-        description="Pay when you book a doctor. After you upload proof, our team verifies payment and confirms your visit."
-      />
-
-      <div className="mt-6 flex flex-wrap gap-2 text-xs sm:text-sm text-slate-500">
-        <span className="rounded-full bg-slate-100 px-3 py-1 font-medium">1. Book & pay</span>
-        <span className="text-slate-300">→</span>
-        <span className="rounded-full bg-amber-100 px-3 py-1 font-medium text-amber-800">
-          2. Awaiting verification
-        </span>
-        <span className="text-slate-300">→</span>
-        <span className="rounded-full bg-teal-100 px-3 py-1 font-medium text-teal-800">3. Confirmed</span>
+      <div className="dh-portal-panel mb-6 overflow-hidden">
+        <div className="bg-gradient-to-r from-teal-700 to-teal-900 px-5 py-6 text-white sm:px-6">
+          <p className="text-xs font-bold uppercase tracking-widest text-teal-200">Visit schedule</p>
+          <h1 className="mt-1 font-display text-xl font-semibold sm:text-2xl">My appointments</h1>
+          <p className="mt-2 text-sm text-teal-100">
+            Track booking status from payment to confirmed hospital visit.
+          </p>
+        </div>
       </div>
 
-      <div className="mt-6 max-w-3xl space-y-2.5">
+      <div className="dh-hospital-strip mb-6">
+        <span className="dh-trust-pill">1 · Book & pay</span>
+        <span className="text-slate-300">→</span>
+        <span className="dh-trust-pill bg-amber-50 text-amber-900">2 · Awaiting verification</span>
+        <span className="text-slate-300">→</span>
+        <span className="dh-trust-pill bg-emerald-50 text-emerald-900">3 · Confirmed visit</span>
+      </div>
+
+      <div className="space-y-3">
         {loading ? (
           <>
             <AppointmentCardSkeleton />

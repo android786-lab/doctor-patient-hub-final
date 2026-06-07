@@ -1,8 +1,21 @@
-import { useContext, useEffect, useState } from 'react'
+import { useContext, useEffect, useMemo, useState } from 'react'
 import { toast } from 'react-toastify'
 import axiosClient from '../../lib/axiosClient'
 import { AdminContext } from '../../context/AdminContext'
 import PageHeader from '../../components/admin/PageHeader'
+import ClinicalDataList from '@doctor-hub/ui/ClinicalDataList.jsx'
+
+function ActiveBadge({ active }) {
+  return (
+    <span
+      className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
+        active ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'
+      }`}
+    >
+      {active ? 'Yes' : 'No'}
+    </span>
+  )
+}
 
 export default function AdminPatients() {
   const { aToken, backendUrl } = useContext(AdminContext)
@@ -27,6 +40,24 @@ export default function AdminPatients() {
     if (aToken) load()
   }, [aToken, backendUrl])
 
+  const columns = useMemo(
+    () => [
+      { key: 'name', label: 'Name', render: (p) => <span className="font-medium text-slate-900">{p.name}</span> },
+      { key: 'email', label: 'Email', render: (p) => p.email || '—' },
+      {
+        key: 'joined_at',
+        label: 'Joined',
+        render: (p) => (p.joined_at ? new Date(p.joined_at).toLocaleDateString() : '—'),
+      },
+      {
+        key: 'is_active',
+        label: 'Active',
+        render: (p) => <ActiveBadge active={p.is_active !== false} />,
+      },
+    ],
+    []
+  )
+
   return (
     <div className="p-4 sm:p-5 lg:p-7">
       <PageHeader
@@ -38,43 +69,23 @@ export default function AdminPatients() {
       {loading ? (
         <div className="h-40 animate-pulse rounded-xl bg-slate-200" />
       ) : (
-        <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <table className="min-w-full text-left text-sm">
-            <thead className="border-b border-slate-200 bg-slate-50 text-xs font-semibold uppercase text-slate-500">
-              <tr>
-                <th className="px-4 py-3">Name</th>
-                <th className="px-4 py-3">Email</th>
-                <th className="px-4 py-3">Joined</th>
-                <th className="px-4 py-3">Active</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {patients.map((p) => (
-                <tr key={p.id} className="hover:bg-slate-50/80">
-                  <td className="px-4 py-3 font-medium text-slate-900">{p.name}</td>
-                  <td className="px-4 py-3 text-slate-600">{p.email || '—'}</td>
-                  <td className="px-4 py-3 text-slate-600">
-                    {p.joined_at ? new Date(p.joined_at).toLocaleDateString() : '—'}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
-                        p.is_active !== false
-                          ? 'bg-emerald-100 text-emerald-800'
-                          : 'bg-slate-100 text-slate-600'
-                      }`}
-                    >
-                      {p.is_active !== false ? 'Yes' : 'No'}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {patients.length === 0 && (
-            <p className="px-6 py-12 text-center text-sm text-slate-500">No patients found.</p>
+        <ClinicalDataList
+          columns={columns}
+          rows={patients}
+          emptyMessage="No patients found."
+          mobileCard={(p) => (
+            <article className="dh-portal-panel p-4">
+              <p className="font-semibold text-slate-900">{p.name}</p>
+              <p className="mt-1 text-sm text-slate-600">{p.email || '—'}</p>
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3 text-sm">
+                <span className="text-slate-600">
+                  Joined {p.joined_at ? new Date(p.joined_at).toLocaleDateString() : '—'}
+                </span>
+                <ActiveBadge active={p.is_active !== false} />
+              </div>
+            </article>
           )}
-        </div>
+        />
       )}
     </div>
   )

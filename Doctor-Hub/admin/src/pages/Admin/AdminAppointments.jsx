@@ -1,8 +1,9 @@
-import { useContext, useEffect, useState } from 'react'
+import { useContext, useEffect, useMemo, useState } from 'react'
 import { toast } from 'react-toastify'
 import axiosClient from '../../lib/axiosClient'
 import { AdminContext } from '../../context/AdminContext'
 import PageHeader from '../../components/admin/PageHeader'
+import ClinicalDataList from '@doctor-hub/ui/ClinicalDataList.jsx'
 import { formatMoney } from '@doctor-hub/constants/currency.js'
 
 const STATUS_OPTIONS = [
@@ -65,6 +66,25 @@ export default function AdminAppointments() {
     if (aToken) load()
   }, [aToken])
 
+  const columns = useMemo(
+    () => [
+      {
+        key: 'patient',
+        label: 'Patient',
+        render: (a) => <span className="font-medium text-slate-900">{a.user_data?.name || 'Patient'}</span>,
+      },
+      { key: 'doctor', label: 'Doctor', render: (a) => a.doc_data?.name || 'Doctor' },
+      {
+        key: 'when',
+        label: 'When',
+        render: (a) => `${a.slot_date} ${a.slot_time}`,
+      },
+      { key: 'amount', label: 'Amount', render: (a) => formatMoney(a.amount ?? 0) },
+      { key: 'status', label: 'Status', render: (a) => <ApptStatus item={a} /> },
+    ],
+    []
+  )
+
   return (
     <div className="p-4 sm:p-5 lg:p-7">
       <PageHeader
@@ -100,39 +120,28 @@ export default function AdminAppointments() {
       {loading ? (
         <div className="h-40 animate-pulse rounded-xl bg-slate-200" />
       ) : (
-        <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <table className="min-w-full text-left text-sm">
-            <thead className="border-b border-slate-200 bg-slate-50 text-xs font-semibold uppercase text-slate-500">
-              <tr>
-                <th className="px-4 py-3">Patient</th>
-                <th className="px-4 py-3">Doctor</th>
-                <th className="px-4 py-3">When</th>
-                <th className="px-4 py-3">Amount</th>
-                <th className="px-4 py-3">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {list.map((a) => (
-                <tr key={a.id} className="hover:bg-slate-50/80">
-                  <td className="px-4 py-3 font-medium text-slate-900">
-                    {a.user_data?.name || 'Patient'}
-                  </td>
-                  <td className="px-4 py-3 text-slate-600">{a.doc_data?.name || 'Doctor'}</td>
-                  <td className="px-4 py-3 text-slate-600">
-                    {a.slot_date} {a.slot_time}
-                  </td>
-                  <td className="px-4 py-3">{formatMoney(a.amount ?? 0)}</td>
-                  <td className="px-4 py-3">
-                    <ApptStatus item={a} />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {list.length === 0 && (
-            <p className="px-6 py-12 text-center text-sm text-slate-500">No appointments match filters.</p>
+        <ClinicalDataList
+          columns={columns}
+          rows={list}
+          emptyMessage="No appointments match filters."
+          mobileCard={(a) => (
+            <article className="dh-portal-panel p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="font-semibold text-slate-900">{a.user_data?.name || 'Patient'}</p>
+                  <p className="mt-0.5 text-sm text-teal-700">Dr. {a.doc_data?.name || 'Doctor'}</p>
+                </div>
+                <ApptStatus item={a} />
+              </div>
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3 text-sm text-slate-600">
+                <span>
+                  {a.slot_date} {a.slot_time}
+                </span>
+                <span className="font-semibold text-slate-900">{formatMoney(a.amount ?? 0)}</span>
+              </div>
+            </article>
           )}
-        </div>
+        />
       )}
     </div>
   )

@@ -1,8 +1,9 @@
-import { useContext, useEffect, useState } from 'react'
+import { useContext, useEffect, useMemo, useState } from 'react'
 import { toast } from 'react-toastify'
 import axiosClient from '../../lib/axiosClient'
 import { AdminContext } from '../../context/AdminContext'
 import PageHeader from '../../components/admin/PageHeader'
+import ClinicalDataList from '@doctor-hub/ui/ClinicalDataList.jsx'
 import { formatMoney } from '@doctor-hub/constants/currency.js'
 
 export default function AdminPayments() {
@@ -30,6 +31,52 @@ export default function AdminPayments() {
     if (aToken) load()
   }, [aToken, backendUrl])
 
+  const columns = useMemo(
+    () => [
+      {
+        key: 'appointment',
+        label: 'Appointment',
+        render: (p) => (
+          <>
+            <span className="font-mono text-xs text-slate-600">{p.appointment_id?.slice(0, 8) || p.id}…</span>
+            <br />
+            <span className="text-slate-500">
+              {p.slot_date} {p.slot_time}
+            </span>
+          </>
+        ),
+      },
+      {
+        key: 'amount',
+        label: 'Amount',
+        render: (p) => <span className="font-semibold text-teal-800">{formatMoney(p.amount)}</span>,
+      },
+      { key: 'status', label: 'Status', render: (p) => <span className="capitalize">{p.status}</span> },
+      {
+        key: 'created_at',
+        label: 'When',
+        render: (p) => (p.created_at ? new Date(p.created_at).toLocaleString() : '—'),
+      },
+      {
+        key: 'screenshot',
+        label: 'Screenshot',
+        render: (p) =>
+          p.screenshot_url ? (
+            <button
+              type="button"
+              onClick={() => setPreviewUrl(p.screenshot_url)}
+              className="font-semibold text-teal-700 hover:underline"
+            >
+              View
+            </button>
+          ) : (
+            '—'
+          ),
+      },
+    ],
+    []
+  )
+
   return (
     <div className="p-4 sm:p-5 lg:p-7">
       <PageHeader
@@ -41,53 +88,36 @@ export default function AdminPayments() {
       {loading ? (
         <div className="h-40 animate-pulse rounded-xl bg-slate-200" />
       ) : (
-        <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <table className="min-w-full text-left text-sm">
-            <thead className="border-b border-slate-200 bg-slate-50 text-xs font-semibold uppercase text-slate-500">
-              <tr>
-                <th className="px-4 py-3">Appointment</th>
-                <th className="px-4 py-3">Amount</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">When</th>
-                <th className="px-4 py-3">Screenshot</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {payments.map((p) => (
-                <tr key={p.id} className="hover:bg-slate-50/80">
-                  <td className="px-4 py-3 font-mono text-xs text-slate-600">
-                    {p.appointment_id?.slice(0, 8) || p.id}…
-                    <br />
-                    <span className="text-slate-500">
-                      {p.slot_date} {p.slot_time}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 font-semibold text-teal-800">{formatMoney(p.amount)}</td>
-                  <td className="px-4 py-3 capitalize">{p.status}</td>
-                  <td className="px-4 py-3 text-slate-600">
-                    {p.created_at ? new Date(p.created_at).toLocaleString() : '—'}
-                  </td>
-                  <td className="px-4 py-3">
-                    {p.screenshot_url ? (
-                      <button
-                        type="button"
-                        onClick={() => setPreviewUrl(p.screenshot_url)}
-                        className="font-semibold text-teal-700 hover:underline"
-                      >
-                        View
-                      </button>
-                    ) : (
-                      '—'
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {payments.length === 0 && (
-            <p className="px-6 py-12 text-center text-sm text-slate-500">No payment records.</p>
+        <ClinicalDataList
+          columns={columns}
+          rows={payments}
+          emptyMessage="No payment records."
+          mobileCard={(p) => (
+            <article className="dh-portal-panel p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="font-mono text-xs text-slate-600">{p.appointment_id?.slice(0, 8) || p.id}…</p>
+                  <p className="mt-1 text-sm text-slate-600">
+                    {p.slot_date} {p.slot_time}
+                  </p>
+                </div>
+                <span className="font-semibold text-teal-800">{formatMoney(p.amount)}</span>
+              </div>
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3 text-sm">
+                <span className="capitalize text-slate-700">{p.status}</span>
+                {p.screenshot_url ? (
+                  <button
+                    type="button"
+                    onClick={() => setPreviewUrl(p.screenshot_url)}
+                    className="font-semibold text-teal-700 hover:underline"
+                  >
+                    View proof
+                  </button>
+                ) : null}
+              </div>
+            </article>
           )}
-        </div>
+        />
       )}
 
       {previewUrl && (
