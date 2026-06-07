@@ -1,13 +1,6 @@
 {
   "version": 2,
-  "builds": [
-    { "src": "public/**", "use": "@vercel/static" },
-    { "src": "api/health.js", "use": "@vercel/node" },
-    { "src": "api/index.js", "use": "@vercel/node" }
-  ],
-  "routes": [
-    { "src": "/deploy-check.json", "dest": "/public/deploy-check.json" },
-    { "src": "/api/health", "dest": "/api/health.js" },
-    { "src": "/(.*)", "dest": "/api/index.js" }
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/api" }
   ]
 }

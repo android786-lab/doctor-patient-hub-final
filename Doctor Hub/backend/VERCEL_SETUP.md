@@ -53,6 +53,15 @@ ADMIN_PASSWORD
 
 ## Good build log signs
 
-- `WARNING! Due to builds existing in your configuration file` ✓
-- `added XXX packages` ✓
+- `added XXX packages` (backend deps only, ~174) ✓
+- `Build Completed in /vercel/output` ✓
 - **No** `Running "npm run vercel-build"` ✓
+- **No** `WARNING! Due to builds existing` (legacy `builds` removed — uses `api/` + `rewrites`)
+
+## How routing works (current `vercel.json`)
+
+| Path | Handler |
+|------|---------|
+| `/deploy-check.json` | `public/deploy-check.json` (static, auto-served) |
+| `/api/health` | `api/health.js` (standalone function) |
+| Everything else | `api/index.js` → Express (`server.js`) via rewrite |
