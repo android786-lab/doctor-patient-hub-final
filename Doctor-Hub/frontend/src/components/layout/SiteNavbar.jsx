@@ -59,7 +59,8 @@ export default function SiteNavbar() {
   }
 
   return (
-    <header className="sticky top-0 z-50 border-b border-slate-200/90 bg-white/90 shadow-sm shadow-slate-200/40 backdrop-blur-lg">
+    <header className="sticky top-0 z-50 border-b border-teal-100/80 bg-white/95 shadow-sm shadow-slate-200/40 backdrop-blur-lg">
+      <div className="h-1 bg-gradient-to-r from-teal-600 via-teal-500 to-sky-600" />
       <div className="dh-container-wide flex h-14 items-center justify-between gap-3 sm:h-[4.25rem] sm:gap-4">
         <Link to="/" className="shrink-0 no-underline">
           <BrandLogo link={false} />

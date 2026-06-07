@@ -50,13 +50,17 @@ function AuthLayout({ children }) {
 
 function PatientLayout({ children, hideFooter = false, portal = false }) {
   return (
-    <div className="flex min-h-screen flex-col bg-slate-50">
+    <div className="flex min-h-screen flex-col">
       <Navbar />
       <div className={`dh-container-wide flex-1 ${hideFooter ? 'py-3 sm:py-4 md:py-6' : 'py-4 sm:py-6 md:py-8'}`}>
         {portal ? (
           <div className="flex w-full gap-5 lg:gap-8">
             <PatientSidebar />
             <div className="min-w-0 w-full flex-1">
+              <div className="mb-4 rounded-2xl border border-teal-100 bg-gradient-to-r from-teal-50/80 to-white px-4 py-3 lg:hidden">
+                <p className="text-xs font-bold uppercase tracking-wider text-teal-800">Patient portal</p>
+                <p className="text-sm text-slate-600">Manage appointments & medical records</p>
+              </div>
               <PatientMobileNav />
               {children}
             </div>

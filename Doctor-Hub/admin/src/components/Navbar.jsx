@@ -67,7 +67,8 @@ export default function Navbar({ onMenuClick }) {
     location.pathname === '/doctor-dashboard'
 
   return (
-    <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur">
+    <header className="sticky top-0 z-40 border-b border-teal-100 bg-white/95 backdrop-blur">
+      <div className="h-1 bg-gradient-to-r from-teal-600 via-teal-500 to-sky-600" />
       <div className="flex items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
         <div className="flex min-w-0 items-center gap-3">
           <button

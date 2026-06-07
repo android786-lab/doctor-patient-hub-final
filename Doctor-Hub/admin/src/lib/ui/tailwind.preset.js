@@ -13,8 +13,14 @@ export default {
           dark: '#0f766e',
           light: '#ccfbf1',
         },
+        medical: {
+          DEFAULT: '#0369a1',
+          dark: '#075985',
+          light: '#e0f2fe',
+        },
         accent: '#f59e0b',
         surface: '#f8fafc',
+        clinic: '#f0fdfa',
       },
       boxShadow: {
         card: '0 4px 24px -4px rgba(15, 118, 110, 0.12)',

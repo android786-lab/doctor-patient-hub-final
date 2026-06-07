@@ -116,17 +116,13 @@ export default function Doctors() {
   return (
     <div className="w-full pb-16">
       {/* Hero */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-teal-900 to-teal-700 px-6 py-10 text-white md:px-10 md:py-14">
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-teal-900 to-teal-700 px-5 py-10 text-white shadow-xl sm:rounded-3xl sm:px-8 md:py-14">
         <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-teal-400/20 blur-3xl" />
-        <div className="absolute -bottom-16 left-1/3 h-48 w-48 rounded-full bg-white/10 blur-2xl" />
         <div className="relative">
-          <p className="text-sm font-medium uppercase tracking-widest text-teal-200">
-            Doctor directory
-          </p>
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-teal-200">Doctor directory</p>
           <h1 className="mt-2 font-display text-2xl font-semibold sm:text-3xl md:text-4xl">{title}</h1>
           <p className="mt-3 max-w-2xl text-sm text-teal-100/90 md:text-base">
-            Browse verified specialists by disease, treatment type, or speciality. Book a slot and
-            pay securely through Doctor Hub.
+            Browse verified hospital specialists by disease, department, or speciality. Book your visit online.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             {quickDiseaseTags.map((tag) => (

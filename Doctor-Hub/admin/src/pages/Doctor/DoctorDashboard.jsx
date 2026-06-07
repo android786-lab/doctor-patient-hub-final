@@ -12,7 +12,7 @@ function StatCard({ label, value, tone = 'slate' }) {
     sky: 'bg-sky-50 ring-sky-200/80 text-sky-900',
   }
   return (
-    <div className={`rounded-2xl p-5 ring-1 ${tones[tone]}`}>
+    <div className={`dh-stat-panel ${tones[tone]}`}>
       <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</p>
       <p className="mt-2 font-display text-3xl font-semibold">{value}</p>
     </div>
@@ -48,10 +48,18 @@ export default function DoctorDashboard() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
+      <div className="dh-portal-panel mb-8 overflow-hidden">
+        <div className="bg-gradient-to-r from-teal-700 to-teal-900 px-6 py-7 text-white">
+          <p className="text-xs font-bold uppercase tracking-widest text-teal-200">Clinical portal</p>
+          <h1 className="mt-1 font-display text-2xl font-semibold">Dr. {name}</h1>
+          <p className="mt-2 text-sm text-teal-100">Your hospital workstation — patients, visits & records.</p>
+        </div>
+      </div>
+
       <PageHeader
-        eyebrow="Doctor portal"
-        title={`Welcome, Dr. ${name}`}
-        description="Overview of appointments, patients, and pending payments."
+        eyebrow="Overview"
+        title="Today at a glance"
+        description="Appointments, patients, and pending payments."
       />
 
       {loading ? (

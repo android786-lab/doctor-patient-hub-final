@@ -46,21 +46,21 @@ export default function AiSymptom() {
 
   return (
     <div className="pb-16">
-      <div className="dh-hero">
+      <div className="dh-hero--clinical">
         <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-teal-400/20 blur-3xl" />
         <div className="relative">
-          <p className="text-sm font-medium uppercase tracking-widest text-teal-200">AI triage</p>
-          <h1 className="mt-2 font-display text-3xl font-semibold md:text-4xl">Symptom check</h1>
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-teal-200">Pre-visit triage</p>
+          <h1 className="mt-2 font-display text-3xl font-semibold md:text-4xl">AI symptom check</h1>
           <p className="mt-3 max-w-2xl text-sm text-teal-100/90 md:text-base">
-            Describe how you feel — we suggest possible conditions and when to see a specialist.
-            This is guidance only, not a diagnosis.
+            Describe how you feel before booking — we suggest possible conditions and when to see a
+            specialist. Guidance only, not a diagnosis.
           </p>
         </div>
       </div>
 
       <div className="mt-10 grid gap-8 lg:grid-cols-[1fr_minmax(280px,340px)]">
         <div className="space-y-6">
-          <div className="dh-card p-6 md:p-8">
+          <div className="dh-portal-panel p-6 md:p-8">
             <label className="dh-label" htmlFor="symptoms-input">
               Your symptoms
             </label>

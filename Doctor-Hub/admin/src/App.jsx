@@ -58,7 +58,7 @@ function StaffShell({ children }) {
   }, [sidebarOpen])
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100/80">
+    <div className="dh-staff-shell">
       <Navbar onMenuClick={() => setSidebarOpen(true)} />
       {sidebarOpen ? (
         <button

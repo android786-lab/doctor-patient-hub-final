@@ -71,10 +71,20 @@ export default function PatientDashboard() {
 
   return (
     <div className="pb-12">
+      <div className="dh-portal-panel mb-8 overflow-hidden">
+        <div className="bg-gradient-to-r from-teal-700 to-teal-900 px-6 py-8 text-white md:px-8">
+          <p className="text-xs font-bold uppercase tracking-widest text-teal-200">Patient portal</p>
+          <h1 className="mt-2 font-display text-2xl font-semibold md:text-3xl">Welcome, {name}</h1>
+          <p className="mt-2 text-sm text-teal-100">
+            Your hospital dashboard — appointments, records, and prescriptions in one place.
+          </p>
+        </div>
+      </div>
+
       <PageHeader
-        eyebrow="Patient portal"
-        title={`Welcome back, ${name}!`}
-        description="Here is a quick overview of your care journey on Doctor Hub."
+        eyebrow="Overview"
+        title="Your care summary"
+        description="Track visits and access hospital services."
       />
 
       {loading ? (
@@ -97,7 +107,7 @@ export default function PatientDashboard() {
           <Link
             key={a.to}
             to={a.to}
-            className="dh-card group p-5 transition hover:border-teal-200 hover:shadow-md"
+            className="group dh-dept-card block no-underline"
           >
             <p className="font-semibold text-slate-900 group-hover:text-teal-700">{a.label}</p>
             <p className="mt-1 text-sm text-slate-500">{a.desc}</p>

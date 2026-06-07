@@ -15,9 +15,10 @@ function staffHomePath(role) {
 }
 
 const features = [
-  'Verify Stripe payments & confirm bookings',
-  'Manage doctors, slots & availability',
-  'Track appointments & patient flow',
+  'Verify payments & confirm patient visits',
+  'Manage doctor schedules & departments',
+  'Track appointments & clinical workflow',
+  'Hospital analytics & staff administration',
 ]
 
 export default function Login() {
@@ -121,16 +122,22 @@ export default function Login() {
   }
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
-      <div className="hidden flex-1 flex-col justify-between bg-gradient-to-br from-teal-900 via-teal-800 to-slate-900 p-12 text-white lg:flex">
-        <BrandLogo subtitle="Staff Portal" light />
+    <div className="flex min-h-screen bg-gradient-to-br from-slate-50 via-white to-teal-50/30">
+      <div className="hidden flex-1 flex-col justify-between bg-gradient-to-br from-teal-900 via-teal-800 to-sky-900 p-12 text-white lg:flex">
+        <div>
+          <BrandLogo subtitle="Staff Portal" light />
+          <p className="mt-6 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider">
+            <span className="h-2 w-2 rounded-full bg-emerald-400" />
+            Hospital staff access
+          </p>
+        </div>
         <div>
           <h1 className="font-display text-4xl font-semibold leading-tight">
-            Clinic operations, one secure portal
+            Doctor Hub Medical Center — staff portal
           </h1>
           <p className="mt-4 max-w-md text-teal-100/90">
-            Doctor Hub staff tools for administrators and doctors — payments,
-            scheduling, and profiles without third-party branding.
+            Secure tools for doctors, assistants, and administrators — manage visits, verify
+            payments, and coordinate patient care.
           </p>
           <ul className="mt-8 space-y-3">
             {features.map((f) => (
@@ -155,7 +162,7 @@ export default function Login() {
             <BrandLogo subtitle="Staff Portal" />
           </div>
 
-          <div className="dh-card p-8">
+          <div className="dh-portal-panel p-8">
             <div className="mb-6 flex gap-2 rounded-xl bg-slate-100 p-1">
               {['Admin', 'Doctor'].map((tab) => (
                 <button

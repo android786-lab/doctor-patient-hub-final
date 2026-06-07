@@ -1,4 +1,7 @@
 import { Link } from 'react-router-dom'
+import SectionHead from '@doctor-hub/ui/SectionHead.jsx'
+import StatPanel from '@doctor-hub/ui/StatPanel.jsx'
+import TrustBar from '@doctor-hub/ui/TrustBar.jsx'
 
 const values = [
   {
@@ -40,17 +43,16 @@ const teamRoles = [
 export default function About() {
   return (
     <div className="pb-16">
-      <div className="dh-hero">
+      <div className="dh-hero--clinical">
         <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-teal-400/20 blur-3xl" />
-        <div className="absolute -bottom-16 left-1/4 h-48 w-48 rounded-full bg-white/10 blur-2xl" />
         <div className="relative">
-          <p className="text-sm font-medium uppercase tracking-widest text-teal-200">About Doctor Hub</p>
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-teal-200">About us</p>
           <h1 className="mt-2 font-display text-3xl font-semibold md:text-4xl">
-            Healthcare consultation, built for trust
+            Doctor Hub Medical Center
           </h1>
           <p className="mt-4 max-w-3xl text-sm leading-relaxed text-teal-100/90 md:text-base">
-            A production-style platform connecting patients, doctors, assistants, and administrators
-            — designed for real workflows and academic evaluation.
+            A modern hospital portal connecting patients, specialists, and staff — with secure booking,
+            digital records, and verified clinical workflows.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link to="/doctors" className="dh-btn bg-white text-teal-900 hover:bg-teal-50">
@@ -66,29 +68,27 @@ export default function About() {
         </div>
       </div>
 
+      <TrustBar className="mt-8" />
+
       <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((s) => (
-          <div key={s.label} className="dh-card p-6 text-center">
-            <p className="font-display text-3xl font-bold text-teal-700">{s.value}</p>
-            <p className="mt-2 text-sm font-medium text-slate-600">{s.label}</p>
-          </div>
+          <StatPanel key={s.label} label={s.label} value={s.value} tone="teal" />
         ))}
       </div>
 
       <section className="mt-14">
-        <h2 className="font-display text-2xl font-semibold text-slate-900">What we offer</h2>
-        <p className="mt-2 max-w-2xl text-sm text-slate-600">
-          End-to-end tools for booking, clinical records, and staff operations.
-        </p>
+        <SectionHead
+          eyebrow="Our services"
+          title="What we offer"
+          description="End-to-end hospital tools for patients and clinical staff."
+        />
         <div className="mt-8 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
           {values.map((v) => (
             <div
               key={v.title}
-              className="dh-card group p-6 transition hover:border-teal-200 hover:shadow-xl"
+              className="dh-dept-card"
             >
-              <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-teal-50 text-xl transition group-hover:bg-teal-100">
-                {v.icon}
-              </span>
+              <span className="dh-dept-card__icon text-lg">{v.icon}</span>
               <h3 className="mt-4 font-semibold text-slate-900">{v.title}</h3>
               <p className="mt-2 text-sm leading-relaxed text-slate-600">{v.desc}</p>
             </div>

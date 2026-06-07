@@ -151,7 +151,7 @@ export default function Sidebar({ mobileOpen = false, onMobileClose }) {
 
   return (
     <>
-      <aside className="hidden min-h-[calc(100vh-4rem)] w-[260px] shrink-0 flex-col border-r border-slate-200/80 bg-white/90 p-4 backdrop-blur lg:flex">
+      <aside className="hidden min-h-[calc(100vh-4rem)] w-[260px] shrink-0 flex-col border-r border-teal-100/80 bg-white/95 p-4 shadow-sm backdrop-blur lg:flex">
         {sidebarInner}
       </aside>
 
