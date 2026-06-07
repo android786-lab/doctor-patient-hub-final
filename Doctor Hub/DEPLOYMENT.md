@@ -57,7 +57,9 @@ Failed to resolve import "@doctor-hub/ui/..."
 5. **Output Directory:** leave default
 6. Deploy
 
-`backend/api/index.js` is the Vercel serverless entry (re-exports `server.js`). `vercel.json` rewrites all routes to `/api`.
+`backend/api/index.js` is the Vercel serverless entry (re-exports `server.js`). `backend/vercel.json` routes all traffic to `/api/index.js`.
+
+**Vercel project settings (backend):** Framework Preset = **Express** (or Other with `vercel.json` above). Root Directory = `Doctor Hub/backend`. Do **not** override Output Directory to `public`.
 
 ### Environment variables (Vercel → Settings → Environment Variables)
 
