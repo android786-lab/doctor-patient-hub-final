@@ -3,7 +3,7 @@
 Deploy **three separate Vercel projects** — same layout as **CareLink**.
 
 ```
-Doctor Hub/
+Doctor-Hub/
 ├── frontend/     # Patient app  → Vercel project 1
 ├── admin/        # Staff app    → Vercel project 2
 └── backend/      # Express API  → Vercel project 3
@@ -12,8 +12,8 @@ Doctor Hub/
 Each folder is **self-contained** (own `package.json`, own `vercel.json`, own UI in `src/lib/`).  
 No monorepo tricks. No shared folder outside the app.
 
-> **Repo root is `doctor-patient-hub-final`?** Root Directory: `Doctor Hub/frontend`, `Doctor Hub/admin`, `Doctor Hub/backend`.  
-> **Repo root is `Doctor Hub`?** Use `frontend`, `admin`, `backend`.
+> **Repo root is `doctor-patient-hub-final`?** Root Directory: `Doctor-Hub/frontend`, `Doctor-Hub/admin`, `Doctor-Hub/backend`.  
+> **Repo root is `Doctor-Hub`?** Use `frontend`, `admin`, `backend`.
 
 ---
 
@@ -21,7 +21,7 @@ No monorepo tricks. No shared folder outside the app.
 
 | Setting | Value |
 |---------|-------|
-| Root Directory | `Doctor Hub/backend` |
+| Root Directory | `Doctor-Hub/backend` |
 | Framework Preset | **Other** |
 | Build Command | empty |
 | Output Directory | empty |
@@ -58,7 +58,7 @@ GET https://YOUR-BACKEND-URL/api/health
 
 | Setting | Value |
 |---------|-------|
-| Root Directory | `Doctor Hub/frontend` |
+| Root Directory | `Doctor-Hub/frontend` |
 | Framework Preset | **Vite** |
 | Build Command | `npm run build` |
 | Output Directory | `dist` |
@@ -78,7 +78,7 @@ No **Include outside root** needed — all code is inside `frontend/`.
 
 | Setting | Value |
 |---------|-------|
-| Root Directory | `Doctor Hub/admin` |
+| Root Directory | `Doctor-Hub/admin` |
 | Framework Preset | **Vite** |
 | Build Command | `npm run build` |
 | Output Directory | `dist` |
@@ -100,7 +100,7 @@ cd frontend && npm install && npm run dev
 cd admin && npm install && npm run dev
 ```
 
-Or from `Doctor Hub/`: `npm install && npm run dev`
+Or from `Doctor-Hub/`: `npm install && npm run dev`
 
 ---
 
@@ -129,7 +129,7 @@ Imports use aliases: `@doctor-hub/ui/...`, `@doctor-hub/constants/...`, `@doctor
 | `DEPLOYMENT_NOT_FOUND` | Use **Visit** URL from latest deployment |
 | `Origin not allowed` | Set `FRONTEND_URL` / `ADMIN_URL` on backend |
 | API calls to `localhost` | Set `VITE_BACKEND_URL`, redeploy |
-| Backend 404 | Root Directory = `Doctor Hub/backend` |
+| Backend 404 | Root Directory = `Doctor-Hub/backend` |
 
 ---
 

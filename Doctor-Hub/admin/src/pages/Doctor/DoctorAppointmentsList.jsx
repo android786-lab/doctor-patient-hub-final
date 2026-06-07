@@ -16,9 +16,26 @@ function StatusBadge({ status }) {
   }
   const tone = tones[status] || 'bg-slate-50 text-slate-600 ring-slate-200'
   return (
-    <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase ring-1 ${tone}`}>
+    <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold uppercase ring-1 ${tone}`}>
       {String(status || 'pending').replace(/_/g, ' ')}
     </span>
+  )
+}
+
+function AppointmentActions({ appointment: a, dToken }) {
+  if (a.status !== 'confirmed' && a.status !== 'completed') return null
+  return (
+    <div className="flex flex-wrap gap-3">
+      <Link to="/doctor/prescriptions" className="text-sm font-semibold text-teal-700 hover:underline">
+        Records
+      </Link>
+      <Link
+        to={appointmentChatPath(a.id, dToken)}
+        className="text-sm font-semibold text-slate-600 hover:underline"
+      >
+        Chat
+      </Link>
+    </div>
   )
 }
 
@@ -45,7 +62,7 @@ export default function DoctorAppointmentsList() {
   }, [dToken, backendUrl])
 
   return (
-    <div className="p-6 lg:p-8">
+    <div className="p-4 sm:p-6 lg:p-8">
       <PageHeader
         eyebrow="Consultations"
         title="Appointments"
@@ -59,53 +76,57 @@ export default function DoctorAppointmentsList() {
           ))}
         </div>
       ) : items.length === 0 ? (
-        <div className="dh-card px-8 py-12 text-center text-sm text-slate-500">No appointments yet.</div>
+        <div className="dh-card px-6 py-12 text-center text-sm text-slate-500">No appointments yet.</div>
       ) : (
-        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
-          <table className="w-full text-left text-sm">
-            <thead className="border-b bg-slate-50 text-xs uppercase text-slate-500">
-              <tr>
-                <th className="px-4 py-3">Patient</th>
-                <th className="px-4 py-3">Date</th>
-                <th className="px-4 py-3">Time</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((a) => (
-                <tr key={a.id} className="border-b border-slate-100 last:border-0">
-                  <td className="px-4 py-3 font-medium text-slate-900">{a.patient_name}</td>
-                  <td className="px-4 py-3 text-slate-600">{a.date || '—'}</td>
-                  <td className="px-4 py-3 text-slate-600">{a.time || '—'}</td>
-                  <td className="px-4 py-3">
-                    <StatusBadge status={a.status} />
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex flex-wrap gap-2">
-                      {(a.status === 'confirmed' || a.status === 'completed') && (
-                        <>
-                          <Link
-                            to="/doctor/prescriptions"
-                            className="text-xs font-semibold text-teal-700 hover:underline"
-                          >
-                            Records
-                          </Link>
-                          <Link
-                            to={appointmentChatPath(a.id, dToken)}
-                            className="text-xs font-semibold text-slate-600 hover:underline"
-                          >
-                            Chat
-                          </Link>
-                        </>
-                      )}
-                    </div>
-                  </td>
+        <>
+          <div className="space-y-3 md:hidden">
+            {items.map((a) => (
+              <article key={a.id} className="dh-card p-4">
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="font-semibold text-slate-900">{a.patient_name}</p>
+                    <p className="mt-1 text-sm text-slate-600">
+                      {a.date || '—'} · {a.time || '—'}
+                    </p>
+                  </div>
+                  <StatusBadge status={a.status} />
+                </div>
+                <div className="mt-3 border-t border-slate-100 pt-3">
+                  <AppointmentActions appointment={a} dToken={dToken} />
+                </div>
+              </article>
+            ))}
+          </div>
+
+          <div className="hidden overflow-x-auto rounded-xl border border-slate-200 bg-white md:block">
+            <table className="w-full min-w-[640px] text-left text-sm">
+              <thead className="border-b bg-slate-50 text-xs uppercase text-slate-500">
+                <tr>
+                  <th className="px-4 py-3">Patient</th>
+                  <th className="px-4 py-3">Date</th>
+                  <th className="px-4 py-3">Time</th>
+                  <th className="px-4 py-3">Status</th>
+                  <th className="px-4 py-3">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {items.map((a) => (
+                  <tr key={a.id} className="border-b border-slate-100 last:border-0">
+                    <td className="px-4 py-3 font-medium text-slate-900">{a.patient_name}</td>
+                    <td className="px-4 py-3 text-slate-600">{a.date || '—'}</td>
+                    <td className="px-4 py-3 text-slate-600">{a.time || '—'}</td>
+                    <td className="px-4 py-3">
+                      <StatusBadge status={a.status} />
+                    </td>
+                    <td className="px-4 py-3">
+                      <AppointmentActions appointment={a} dToken={dToken} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </div>
   )

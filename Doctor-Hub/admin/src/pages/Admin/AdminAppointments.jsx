@@ -66,7 +66,7 @@ export default function AdminAppointments() {
   }, [aToken])
 
   return (
-    <div className="p-5 lg:p-7">
+    <div className="p-4 sm:p-5 lg:p-7">
       <PageHeader
         eyebrow="Administration"
         title="Appointments"
@@ -77,9 +77,9 @@ export default function AdminAppointments() {
         </button>
       </PageHeader>
 
-      <div className="mb-6 flex flex-wrap gap-3">
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
         <select
-          className="dh-input w-auto min-w-[160px]"
+          className="dh-input w-full min-w-0 sm:w-auto sm:min-w-[160px]"
           value={status}
           onChange={(e) => setStatus(e.target.value)}
         >
@@ -91,7 +91,7 @@ export default function AdminAppointments() {
         </select>
         <input
           type="date"
-          className="dh-input w-auto"
+          className="dh-input w-full sm:w-auto"
           value={date}
           onChange={(e) => setDate(e.target.value)}
         />

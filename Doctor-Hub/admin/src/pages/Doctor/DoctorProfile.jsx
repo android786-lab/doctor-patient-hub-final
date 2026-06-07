@@ -214,7 +214,7 @@ export default function DoctorProfile() {
 
     return (
 
-      <div className="p-6 lg:p-8">
+      <div className="p-4 sm:p-6 lg:p-8">
 
         <div className="h-8 w-48 animate-pulse rounded-lg bg-slate-200" />
 
@@ -232,7 +232,7 @@ export default function DoctorProfile() {
 
     return (
 
-      <div className="p-6 lg:p-8">
+      <div className="p-4 sm:p-6 lg:p-8">
 
         <PageHeader title="My profile" description="Could not load your profile." />
 
@@ -260,7 +260,7 @@ export default function DoctorProfile() {
 
   return (
 
-    <div className="p-6 lg:p-8">
+    <div className="p-4 sm:p-6 lg:p-8">
 
       <PageHeader
 
@@ -396,7 +396,7 @@ export default function DoctorProfile() {
 
 
 
-          <dl className="mt-5 grid grid-cols-2 gap-3 border-t border-slate-100 pt-4 text-sm sm:grid-cols-3">
+          <dl className="mt-5 grid grid-cols-1 gap-3 border-t border-slate-100 pt-4 text-sm min-[400px]:grid-cols-2 sm:grid-cols-3">
 
             <div>
 

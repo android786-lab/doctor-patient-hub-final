@@ -7,24 +7,30 @@ const links = [
   { to: '/patient/messages', label: 'Messages' },
   { to: '/patient/history', label: 'History' },
   { to: '/patient/prescriptions', label: 'Rx' },
+  { to: '/patient/profile', label: 'Profile' },
 ]
 
 export default function PatientMobileNav() {
   return (
-    <nav className="mb-4 flex gap-2 overflow-x-auto pb-1 lg:hidden">
-      {links.map((l) => (
-        <NavLink
-          key={l.to}
-          to={l.to}
-          className={({ isActive }) =>
-            `shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold ${
-              isActive ? 'bg-teal-600 text-white' : 'bg-slate-100 text-slate-600'
-            }`
-          }
-        >
-          {l.label}
-        </NavLink>
-      ))}
+    <nav
+      aria-label="Patient portal"
+      className="mb-4 -mx-1 rounded-2xl border border-slate-200/80 bg-white p-1.5 shadow-sm lg:hidden"
+    >
+      <div className="flex gap-1.5 overflow-x-auto scroll-smooth pb-0.5 snap-x snap-mandatory">
+        {links.map((l) => (
+          <NavLink
+            key={l.to}
+            to={l.to}
+            className={({ isActive }) =>
+              `snap-start shrink-0 rounded-xl px-3.5 py-2 text-sm font-semibold transition ${
+                isActive ? 'bg-teal-600 text-white shadow-sm' : 'bg-slate-50 text-slate-600 hover:bg-teal-50'
+              }`
+            }
+          >
+            {l.label}
+          </NavLink>
+        ))}
+      </div>
     </nav>
   )
 }

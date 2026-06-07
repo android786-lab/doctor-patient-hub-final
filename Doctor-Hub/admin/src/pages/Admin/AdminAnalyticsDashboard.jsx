@@ -59,7 +59,7 @@ export default function AdminAnalyticsDashboard({ basePath = '/admin', embedded 
   }
 
   return (
-    <div className={embedded ? '' : 'p-5 lg:p-7'}>
+    <div className={embedded ? '' : 'p-4 sm:p-5 lg:p-7'}>
       {!embedded && (
         <PageHeader
           eyebrow={isSuper ? 'Super Admin' : 'Administration'}

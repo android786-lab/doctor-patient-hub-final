@@ -22,12 +22,17 @@ const PaymentSuccess = () => {
 
     const verify = async () => {
       try {
-        const { data } = await axios.post(backendUrl + '/api/user/verifySTRIPE', { session_id: sessionId }, { headers: { token } })
+        const { data } = await axios.post(
+          backendUrl + '/api/user/verifySTRIPE',
+          { session_id: sessionId },
+          { headers: { token } }
+        )
         if (data.success) {
           setStatus('Payment successful!')
           toast.success(data.message || 'Payment successful')
-          // refresh appointments and doctors data if available
-          try { getDoctorsData && getDoctorsData() } catch (e) {}
+          try {
+            getDoctorsData && getDoctorsData()
+          } catch (e) {}
           setTimeout(() => navigate('/my-appointments'), 1200)
         } else {
           setStatus('Payment verification failed')
@@ -43,11 +48,15 @@ const PaymentSuccess = () => {
     }
 
     verify()
-  }, [location.search])
+  }, [location.search, backendUrl, token, navigate, getDoctorsData])
 
   return (
-    <div className='mt-24 text-center'>
-      <p className='text-lg font-medium text-gray-700'>{status}</p>
+    <div className="flex min-h-[50vh] flex-col items-center justify-center px-4 py-16 text-center">
+      <div className="dh-card w-full max-w-md px-6 py-10">
+        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-teal-50 text-2xl">✓</div>
+        <p className="text-base font-medium text-slate-700 sm:text-lg">{status}</p>
+        <p className="mt-2 text-sm text-slate-500">Redirecting to your appointments…</p>
+      </div>
     </div>
   )
 }

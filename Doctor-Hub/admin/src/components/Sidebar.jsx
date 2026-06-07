@@ -81,7 +81,25 @@ function staffLinks(role) {
   ]
 }
 
-export default function Sidebar() {
+function SidebarNav({ links, totalUnread, onNavigate }) {
+  return (
+    <nav className="flex flex-1 flex-col gap-1 overflow-y-auto">
+      {links.map((item) => (
+        <NavLink key={item.to} to={item.to} className={linkClass} onClick={onNavigate}>
+          <Icon name={item.icon} />
+          <span className="flex-1">{item.label}</span>
+          {item.showBadge && totalUnread > 0 && (
+            <span className="flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-red-500 px-1.5 text-xs font-bold text-white">
+              {totalUnread > 9 ? '9+' : totalUnread}
+            </span>
+          )}
+        </NavLink>
+      ))}
+    </nav>
+  )
+}
+
+export default function Sidebar({ mobileOpen = false, onMobileClose }) {
   const { dToken, backendUrl: doctorBackend } = useContext(DoctorContext)
   const { aToken, backendUrl: adminBackend } = useContext(AdminContext)
   const role = aToken ? roleFromToken(aToken) : 'doctor'
@@ -119,27 +137,42 @@ export default function Sidebar() {
 
   if (!aToken && !dToken) return null
 
-  return (
-    <aside className="flex min-h-[calc(100vh-4rem)] w-full max-w-[260px] flex-col border-r border-slate-200/80 bg-white/90 p-4 backdrop-blur">
-      <div className="mb-6 px-2">
+  const handleNavigate = () => onMobileClose?.()
+
+  const sidebarInner = (
+    <>
+      <div className="mb-6 hidden px-2 lg:block">
         <BrandLogo subtitle={subtitle} link={false} />
       </div>
-      <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-widest text-slate-400">
-        Menu
-      </p>
-      <nav className="flex flex-1 flex-col gap-1">
-        {links.map((item) => (
-          <NavLink key={item.to} to={item.to} className={linkClass}>
-            <Icon name={item.icon} />
-            <span className="flex-1">{item.label}</span>
-            {item.showBadge && totalUnread > 0 && (
-              <span className="flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-bold text-white">
-                {totalUnread > 9 ? '9+' : totalUnread}
-              </span>
-            )}
-          </NavLink>
-        ))}
-      </nav>
-    </aside>
+      <p className="mb-2 px-2 text-xs font-semibold uppercase tracking-widest text-slate-400">Menu</p>
+      <SidebarNav links={links} totalUnread={totalUnread} onNavigate={handleNavigate} />
+    </>
+  )
+
+  return (
+    <>
+      <aside className="hidden min-h-[calc(100vh-4rem)] w-[260px] shrink-0 flex-col border-r border-slate-200/80 bg-white/90 p-4 backdrop-blur lg:flex">
+        {sidebarInner}
+      </aside>
+
+      <aside
+        className={`fixed bottom-0 left-0 top-16 z-50 flex w-[min(280px,88vw)] flex-col border-r border-slate-200/80 bg-white p-4 shadow-xl transition-transform duration-200 lg:hidden ${
+          mobileOpen ? 'translate-x-0' : '-translate-x-full pointer-events-none'
+        }`}
+        aria-hidden={!mobileOpen}
+      >
+        <div className="mb-4 flex items-center justify-between px-2">
+          <p className="text-sm font-semibold text-slate-800">{subtitle}</p>
+          <button
+            type="button"
+            className="rounded-lg border border-slate-200 px-2.5 py-1 text-xs font-medium text-slate-600"
+            onClick={onMobileClose}
+          >
+            Close
+          </button>
+        </div>
+        {sidebarInner}
+      </aside>
+    </>
   )
 }

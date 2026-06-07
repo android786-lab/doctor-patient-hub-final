@@ -1,4 +1,4 @@
-import { useContext, useEffect } from 'react'
+import { useContext, useEffect, useState } from 'react'
 import { decodeJwtPayload } from './utils/jwt.js'
 import { roleFromToken } from './utils/staffRole.js'
 import { DoctorContext } from './context/DoctorContext'
@@ -43,12 +43,36 @@ import DoctorAssistants from './pages/Doctor/Assistants.jsx'
 import AssistantMessages from './pages/assistant/AssistantMessages.jsx'
 
 function StaffShell({ children }) {
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const location = useLocation()
+
+  useEffect(() => {
+    setSidebarOpen(false)
+  }, [location.pathname])
+
+  useEffect(() => {
+    document.body.style.overflow = sidebarOpen ? 'hidden' : ''
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [sidebarOpen])
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100/80">
-      <Navbar />
+      <Navbar onMenuClick={() => setSidebarOpen(true)} />
+      {sidebarOpen ? (
+        <button
+          type="button"
+          aria-label="Close menu"
+          className="fixed inset-0 z-40 bg-slate-900/50 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      ) : null}
       <div className="flex">
-        <Sidebar />
-        <main className="min-h-[calc(100vh-4rem)] flex-1 overflow-auto">{children}</main>
+        <Sidebar mobileOpen={sidebarOpen} onMobileClose={() => setSidebarOpen(false)} />
+        <main className="min-h-[calc(100vh-4rem)] min-w-0 w-full flex-1 overflow-x-hidden overflow-y-auto">
+          {children}
+        </main>
       </div>
     </div>
   )
@@ -136,7 +160,7 @@ export default function App() {
   if (showAdmin) {
     return (
       <>
-        <ToastContainer position="top-right" />
+        <ToastContainer position="top-right" className="!top-4 !right-4 max-sm:!left-4 max-sm:!right-4" />
         <Routes>
           <Route path="/unauthorized" element={<Unauthorized />} />
           <Route
@@ -252,7 +276,7 @@ export default function App() {
   if (showDoctor) {
     return (
       <>
-        <ToastContainer position="top-right" />
+        <ToastContainer position="top-right" className="!top-4 !right-4 max-sm:!left-4 max-sm:!right-4" />
         <Routes>
           <Route path="/unauthorized" element={<Unauthorized />} />
           <Route

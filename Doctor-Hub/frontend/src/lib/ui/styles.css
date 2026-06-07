@@ -5,8 +5,12 @@
 @tailwind utilities;
 
 @layer base {
+  html {
+    @apply overflow-x-hidden;
+  }
+
   body {
-    @apply bg-slate-50 text-slate-800 antialiased font-sans;
+    @apply overflow-x-hidden bg-slate-50 text-slate-800 antialiased font-sans;
   }
 }
 
@@ -21,6 +25,18 @@
 
   .dh-page {
     @apply dh-container-wide py-6 lg:py-8;
+  }
+
+  .dh-page-inner {
+    @apply w-full pb-12;
+  }
+
+  .dh-table-scroll {
+    @apply overflow-x-auto rounded-xl border border-slate-200 bg-white;
+  }
+
+  .dh-btn-compact {
+    @apply px-4 py-2 text-sm;
   }
 
   .dh-card {
@@ -41,7 +57,7 @@
 
   /* Equal-height pair on doctor cards */
   .dh-card-actions {
-    @apply mt-auto grid grid-cols-2 gap-2.5 pt-4;
+    @apply mt-auto grid grid-cols-1 gap-2.5 pt-4 min-[360px]:grid-cols-2;
   }
 
   .dh-card-btn {

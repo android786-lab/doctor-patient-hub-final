@@ -107,7 +107,7 @@ export default function Dashboard() {
 
   if (dashLoading && !dashData) {
     return (
-      <div className="p-6 lg:p-8">
+      <div className="p-4 sm:p-6 lg:p-8">
         <div className="h-32 animate-pulse rounded-3xl bg-gradient-to-r from-slate-200 to-slate-100" />
         <div className="mt-8 grid gap-4 sm:grid-cols-3">
           {[1, 2, 3].map((i) => (
@@ -120,7 +120,7 @@ export default function Dashboard() {
 
   if (dashError && !dashData) {
     return (
-      <div className="p-6 lg:p-8">
+      <div className="p-4 sm:p-6 lg:p-8">
         <PageHeader eyebrow="Overview" title="Admin dashboard" />
         <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {dashError}
@@ -138,7 +138,7 @@ export default function Dashboard() {
   })
 
   return (
-    <div className="p-6 lg:p-8">
+    <div className="p-4 sm:p-6 lg:p-8">
       {/* Hero */}
       <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-teal-900 to-teal-700 px-6 py-8 text-white md:px-10 md:py-10">
         <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-teal-400/20 blur-3xl" />

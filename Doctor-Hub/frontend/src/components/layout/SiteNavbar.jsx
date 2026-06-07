@@ -60,12 +60,12 @@ export default function SiteNavbar() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-slate-200/90 bg-white/90 shadow-sm shadow-slate-200/40 backdrop-blur-lg">
-      <div className="dh-container-wide flex h-[4.25rem] items-center justify-between gap-4">
+      <div className="dh-container-wide flex h-14 items-center justify-between gap-3 sm:h-[4.25rem] sm:gap-4">
         <Link to="/" className="shrink-0 no-underline">
           <BrandLogo link={false} />
         </Link>
 
-        <nav className="hidden flex-1 items-center justify-center md:flex">
+        <nav className="hidden flex-1 items-center justify-center lg:flex">
           <div className="flex items-center gap-0.5 rounded-xl bg-slate-100/80 p-1">
             {links.map((l) => (
               <NavLink key={l.to} to={l.to} end={l.end} className={navClass}>
@@ -80,7 +80,7 @@ export default function SiteNavbar() {
           </div>
         </nav>
 
-        <div className="hidden shrink-0 items-center gap-2.5 md:flex">
+        <div className="hidden shrink-0 items-center gap-2.5 lg:flex">
           <a
             href={import.meta.env.VITE_ADMIN_URL}
             target="_blank"
@@ -220,7 +220,7 @@ export default function SiteNavbar() {
           )}
         </div>
 
-        <div className="flex items-center gap-2 md:hidden">
+        <div className="flex items-center gap-2 lg:hidden">
         <button
           type="button"
           className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm"
@@ -240,7 +240,7 @@ export default function SiteNavbar() {
       </div>
 
       {open && (
-        <div className="border-t border-slate-100 bg-white px-4 py-4 shadow-inner md:hidden">
+        <div className="border-t border-slate-100 bg-white px-4 py-4 shadow-inner lg:hidden">
           {token && (
             <div className="mb-4 flex items-center gap-3 rounded-2xl bg-gradient-to-r from-teal-600 to-teal-500 p-3 shadow-md">
               <UserAvatar

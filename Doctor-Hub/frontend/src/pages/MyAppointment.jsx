@@ -196,14 +196,14 @@ export default function MyAppointments() {
   }, [token])
 
   return (
-    <div className="dh-page pb-16">
+    <div className="dh-page-inner">
       <PageHeader
         eyebrow="Patient"
         title="My appointments"
         description="Pay when you book a doctor. After you upload proof, our team verifies payment and confirms your visit."
       />
 
-      <div className="mt-6 flex flex-wrap gap-2 text-xs text-slate-500">
+      <div className="mt-6 flex flex-wrap gap-2 text-xs sm:text-sm text-slate-500">
         <span className="rounded-full bg-slate-100 px-3 py-1 font-medium">1. Book & pay</span>
         <span className="text-slate-300">→</span>
         <span className="rounded-full bg-amber-100 px-3 py-1 font-medium text-amber-800">

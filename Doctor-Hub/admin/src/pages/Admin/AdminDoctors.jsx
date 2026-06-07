@@ -50,7 +50,7 @@ export default function AdminDoctors() {
   }
 
   return (
-    <div className="p-5 lg:p-7">
+    <div className="p-4 sm:p-5 lg:p-7">
       <PageHeader
         eyebrow="Administration"
         title="Doctors"

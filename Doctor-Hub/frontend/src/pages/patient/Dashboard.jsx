@@ -92,7 +92,7 @@ export default function PatientDashboard() {
         </div>
       )}
 
-      <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-10 grid gap-4 grid-cols-1 min-[400px]:grid-cols-2 lg:grid-cols-3">
         {actions.map((a) => (
           <Link
             key={a.to}
@@ -106,7 +106,7 @@ export default function PatientDashboard() {
       </div>
 
       <section className="mt-10">
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <h2 className="font-display text-lg font-semibold text-slate-900">Recent appointments</h2>
           <Link to={ROUTES.APPOINTMENTS} className="text-sm font-semibold text-teal-700 hover:underline">
             View all
@@ -127,7 +127,7 @@ export default function PatientDashboard() {
             </Link>
           </div>
         ) : (
-          <div className="grid gap-3 md:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
             {recent.map((a) => (
               <article key={a.id} className="dh-card p-4">
                 <div className="flex items-start justify-between gap-2">

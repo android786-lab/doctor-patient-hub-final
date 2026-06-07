@@ -33,7 +33,7 @@ Theme and shared components live in **`src/lib/`** inside frontend and admin (no
 ## Structure (CareLink-style — three deployable apps)
 
 ```
-Doctor Hub/
+Doctor-Hub/
 ├── frontend/          Patient app (Vite, port 5173)
 │   └── src/lib/       UI theme + hooks + constants
 ├── admin/             Staff portal (Vite, port 5174)
@@ -60,7 +60,7 @@ cd frontend && npm install && npm run dev  # terminal 2
 cd admin && npm install && npm run dev     # terminal 3
 ```
 
-Or from `Doctor Hub/`: `npm install` then `npm run dev`
+Or from `Doctor-Hub/`: `npm install` then `npm run dev`
 
 3. Admin http://localhost:5174 → Add Doctor (set **diseases**: `diabetes, fever, migraine`)
 

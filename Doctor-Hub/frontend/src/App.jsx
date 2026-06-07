@@ -36,11 +36,23 @@ import Unauthorized from './pages/Unauthorized'
 import NotFound from './pages/NotFound.jsx'
 import { ROLES } from './utils/constants.js'
 
+function AuthLayout({ children }) {
+  return (
+    <div className="flex min-h-screen flex-col bg-slate-50">
+      <Navbar />
+      <main className="flex flex-1 flex-col px-4 py-6 sm:px-6 md:py-10">
+        <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col justify-center">{children}</div>
+      </main>
+      <Footer />
+    </div>
+  )
+}
+
 function PatientLayout({ children, hideFooter = false, portal = false }) {
   return (
     <div className="flex min-h-screen flex-col bg-slate-50">
       <Navbar />
-      <div className={`dh-container-wide flex-1 ${hideFooter ? 'py-4 md:py-6' : 'py-6 md:py-8'}`}>
+      <div className={`dh-container-wide flex-1 ${hideFooter ? 'py-3 sm:py-4 md:py-6' : 'py-4 sm:py-6 md:py-8'}`}>
         {portal ? (
           <div className="flex w-full gap-5 lg:gap-8">
             <PatientSidebar />
@@ -64,10 +76,10 @@ export default function App() {
       <ToastContainer />
       <Routes>
         {/* Module 1 — auth */}
-        <Route path="/auth/login" element={<Login />} />
-        <Route path="/auth/register" element={<Register />} />
-        <Route path="/auth/forgot-password" element={<ForgotPassword />} />
-        <Route path="/auth/reset-password" element={<ResetPassword />} />
+        <Route path="/auth/login" element={<AuthLayout><Login /></AuthLayout>} />
+        <Route path="/auth/register" element={<AuthLayout><Register /></AuthLayout>} />
+        <Route path="/auth/forgot-password" element={<AuthLayout><ForgotPassword /></AuthLayout>} />
+        <Route path="/auth/reset-password" element={<AuthLayout><ResetPassword /></AuthLayout>} />
         <Route path="/unauthorized" element={<Unauthorized />} />
 
         {/* Module 3 — patient dashboard alias */}

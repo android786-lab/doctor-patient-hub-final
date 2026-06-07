@@ -56,7 +56,7 @@ export default function AssistantDashboard() {
   const urgent = pending > 0
 
   return (
-    <div className="p-6 lg:p-8">
+    <div className="p-4 sm:p-6 lg:p-8">
       <PageHeader
         eyebrow="Assistant"
         title="Payment verification"

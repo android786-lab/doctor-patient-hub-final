@@ -111,7 +111,7 @@ export default function AdminManagementDashboard({ embedded = false }) {
     : ['doctors', 'users', 'roles']
 
   return (
-    <div className={embedded ? '' : 'p-6 lg:p-8'}>
+    <div className={embedded ? '' : 'p-4 sm:p-6 lg:p-8'}>
       {!embedded && (
         <PageHeader
           eyebrow={isSuperAdmin ? 'Super Admin' : 'Administration'}

@@ -123,7 +123,7 @@ export default function Doctors() {
           <p className="text-sm font-medium uppercase tracking-widest text-teal-200">
             Doctor directory
           </p>
-          <h1 className="mt-2 font-display text-3xl font-semibold md:text-4xl">{title}</h1>
+          <h1 className="mt-2 font-display text-2xl font-semibold sm:text-3xl md:text-4xl">{title}</h1>
           <p className="mt-3 max-w-2xl text-sm text-teal-100/90 md:text-base">
             Browse verified specialists by disease, treatment type, or speciality. Book a slot and
             pay securely through Doctor Hub.

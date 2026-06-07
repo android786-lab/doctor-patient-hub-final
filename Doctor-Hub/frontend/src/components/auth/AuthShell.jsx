@@ -3,7 +3,7 @@ import BrandLogo from '../BrandLogo'
 
 export function AuthShell({ title, subtitle, children }) {
   return (
-    <div className="flex min-h-[80vh] overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-lg">
+    <div className="flex w-full min-h-[min(80vh,720px)] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-lg sm:rounded-3xl">
       <div className="hidden w-1/2 flex-col justify-between bg-gradient-to-br from-teal-800 via-teal-600 to-teal-500 p-10 text-white lg:flex">
         <BrandLogo light />
         <div>
@@ -12,7 +12,7 @@ export function AuthShell({ title, subtitle, children }) {
         </div>
         <p className="text-sm text-teal-100">Doctor Hub — secure healthcare platform</p>
       </div>
-      <div className="flex flex-1 flex-col justify-center p-8 sm:p-12">
+      <div className="flex flex-1 flex-col justify-center p-6 sm:p-10 md:p-12">
         <div className="mx-auto w-full max-w-md">
           <div className="mb-6 flex justify-center lg:hidden">
             <BrandLogo />

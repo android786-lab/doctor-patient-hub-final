@@ -198,7 +198,7 @@ export default function AddRecord() {
   const eligible = appointments.filter(isEligible)
 
   return (
-    <div className="p-6 lg:p-8">
+    <div className="p-4 sm:p-6 lg:p-8">
       <PageHeader
         eyebrow="Clinical records"
         title="Medical records & prescriptions"

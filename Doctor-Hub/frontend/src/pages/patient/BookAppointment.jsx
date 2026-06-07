@@ -490,7 +490,7 @@ export default function BookAppointment() {
 
   if (!docInfo) {
     return (
-      <div className="dh-page text-center">
+      <div className="dh-page-inner text-center">
         <p className="text-slate-600">Doctor not found.</p>
         <Link to="/patient/find-doctors" className="dh-btn mt-6 inline-block">
           Find doctors
@@ -753,24 +753,24 @@ export default function BookAppointment() {
             )}
           </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 bg-slate-50/60 px-6 py-4 sm:px-8">
+          <div className="flex flex-col gap-3 border-t border-slate-100 bg-slate-50/60 px-4 py-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:px-8">
             {step > 0 ? (
               <button
                 type="button"
-                className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50"
+                className="w-full rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 sm:w-auto"
                 onClick={() => setStep((s) => s - 1)}
                 disabled={submitting}
               >
                 ← Back
               </button>
             ) : (
-              <span />
+              <span className="hidden sm:block" />
             )}
             {step < 2 ? (
               <button
                 type="button"
                 disabled={!canNext()}
-                className="dh-btn min-w-[140px] disabled:opacity-50"
+                className="dh-btn w-full sm:ml-auto sm:w-auto sm:min-w-[140px] disabled:opacity-50"
                 onClick={() => setStep((s) => s + 1)}
               >
                 Continue →
@@ -779,7 +779,7 @@ export default function BookAppointment() {
               <button
                 type="button"
                 disabled={submitting || !canNext()}
-                className="dh-btn min-w-[160px] disabled:opacity-50"
+                className="dh-btn w-full sm:ml-auto sm:w-auto sm:min-w-[160px] disabled:opacity-50"
                 onClick={() => setStep(3)}
               >
                 Continue to payment →
@@ -788,7 +788,7 @@ export default function BookAppointment() {
               <button
                 type="button"
                 disabled={submitting || !paymentFile}
-                className="dh-btn min-w-[200px] disabled:opacity-50"
+                className="dh-btn w-full sm:ml-auto sm:w-auto sm:min-w-[200px] disabled:opacity-50"
                 onClick={completeBookingWithPayment}
               >
                 {submitting ? 'Submitting…' : 'Pay & book appointment'}

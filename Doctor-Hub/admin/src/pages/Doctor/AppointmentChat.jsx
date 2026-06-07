@@ -24,7 +24,7 @@ export default function DoctorAppointmentChat() {
   )
 
   return (
-    <div className="p-6 lg:p-8">
+    <div className="p-4 sm:p-6 lg:p-8">
       <AppointmentChatPanel
         appointmentId={appointmentId}
         backendUrl={backendUrl}

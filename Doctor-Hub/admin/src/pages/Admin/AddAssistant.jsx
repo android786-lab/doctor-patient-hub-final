@@ -77,7 +77,7 @@ export default function AddAssistant() {
   }
 
   return (
-    <div className="p-6 lg:p-8">
+    <div className="p-4 sm:p-6 lg:p-8">
       <PageHeader
         eyebrow="Staff"
         title="Add assistant"

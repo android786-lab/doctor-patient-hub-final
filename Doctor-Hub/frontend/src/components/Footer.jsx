@@ -79,9 +79,9 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-slate-800 pt-8 text-xs text-slate-500 sm:flex-row">
+        <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-slate-800 pt-8 text-center text-xs text-slate-500 sm:flex-row sm:text-left">
           <p>© {new Date().getFullYear()} Doctor Hub. All rights reserved.</p>
-          <p>FA23-BSE-081 — Healthcare consultation system</p>
+          <p className="max-w-xs sm:max-w-none">FA23-BSE-081 — Healthcare consultation system</p>
         </div>
       </div>
     </footer>
