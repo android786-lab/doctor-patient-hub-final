@@ -9,7 +9,11 @@
   "scripts": {
     "dev": "nodemon server.js",
     "start": "node server.js",
-    "server": "nodemon server.js"
+    "server": "nodemon server.js",
+    "vercel-build": "node -e \"console.log('Express API — no build step')\""
+  },
+  "engines": {
+    "node": ">=20"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.101.1",

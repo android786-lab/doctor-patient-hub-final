@@ -59,7 +59,19 @@ Failed to resolve import "@doctor-hub/ui/..."
 
 `backend/api/index.js` is the Vercel serverless entry (re-exports `server.js`). `backend/vercel.json` routes all traffic to `/api/index.js`.
 
-**Vercel project settings (backend):** Framework Preset = **Express** (or Other with `vercel.json` above). Root Directory = `Doctor Hub/backend`. Do **not** override Output Directory to `public`.
+**Vercel project settings (backend):**
+
+| Setting | Required value |
+|---------|----------------|
+| Root Directory | `Doctor Hub/backend` (exact — not `Doctor Hub`, not `backend`) |
+| Framework Preset | **Express** or **Other** |
+| Output Directory override | **OFF** (never set to `public`) |
+| Build Command override | **OFF** (empty) |
+| Install Command | `npm install` (default) |
+
+`vercel.json` rewrites all paths to `/api` (the `api/index.js` serverless entry).
+
+**If you still see `404: NOT_FOUND`:** Root Directory is wrong, or `backend/node_modules` was committed to git (fixed — run latest commit).
 
 ### Environment variables (Vercel → Settings → Environment Variables)
 

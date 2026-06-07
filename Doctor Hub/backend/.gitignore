@@ -1,0 +1,8 @@
+node_modules
+uploads/*
+!uploads/.gitkeep
+!uploads/payments/.gitkeep
+!uploads/patient-reports/.gitkeep
+.env
+.env*.local
+.vercel
