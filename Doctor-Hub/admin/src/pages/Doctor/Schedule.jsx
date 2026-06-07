@@ -306,11 +306,6 @@ export default function DoctorSchedule() {
           <li>Available slots are generated from this weekly schedule (minus already booked times).</li>
           <li>After payment, the slot is marked booked automatically.</li>
         </ol>
-        <p className="mt-4 text-xs text-slate-500">
-          Schedule is saved to your doctor profile automatically. Optional: run{' '}
-          <code className="rounded bg-slate-100 px-1">supabase/012_doctors_weekly_schedule.sql</code> in Supabase
-          for dedicated columns.
-        </p>
       </div>
     </div>
   )

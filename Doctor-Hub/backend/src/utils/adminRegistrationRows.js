@@ -64,7 +64,7 @@ export async function insertAdminRegistrationRequest({
     }
     if (isMissingRelation(error)) {
       throw new Error(
-        'Admin registration table missing. Run supabase/017_admin_registration_requests.sql in Supabase.'
+        'Admin registration is temporarily unavailable. Please try again later.'
       )
     }
     throw error

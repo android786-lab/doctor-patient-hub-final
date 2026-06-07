@@ -4,6 +4,7 @@ import api from '../services/api.js'
 import { API_BASE_URL, LANDING_PATH, ROLES } from '../utils/constants.js'
 import { decodeJwtPayload } from '../utils/jwt.js'
 import { currencySymbolWithSpace, formatMoney } from '@doctor-hub/constants/currency.js'
+import { friendlyUserMessage } from '../utils/friendlyUserMessage.js'
 
 export const AuthContext = createContext(null)
 
@@ -65,14 +66,10 @@ export function AuthProvider({ children }) {
     try {
       const { data } = await api.get('/doctor/list')
       if (data.success) setDoctors(data.doctors)
-      else if (data.message) toast.error(data.message)
+      else if (data.message) toast.error(friendlyUserMessage(data.message))
     } catch (error) {
       if (!error.isAuthError && !error.isNetworkError) {
-        const msg = error.message || ''
-        const friendly = /column|does not exist|schema cache/i.test(msg)
-          ? 'Could not load doctors. Please try again in a moment.'
-          : msg
-        toast.error(friendly)
+        toast.error(friendlyUserMessage(error.message))
       }
     }
   }

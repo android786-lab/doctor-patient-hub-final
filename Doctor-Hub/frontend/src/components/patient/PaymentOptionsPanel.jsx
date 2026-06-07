@@ -105,7 +105,7 @@ export default function PaymentOptionsPanel({
       }
     } catch (err) {
       const msg = err.response?.data?.message || err.message || 'Upload failed'
-      toast.error(msg === 'fetch failed' || msg === 'Network Error' ? 'Server unreachable — restart backend and try again' : msg)
+      toast.error(msg === 'fetch failed' || msg === 'Network Error' ? 'Unable to connect. Please try again.' : msg)
     } finally {
       setSubmitting(false)
     }

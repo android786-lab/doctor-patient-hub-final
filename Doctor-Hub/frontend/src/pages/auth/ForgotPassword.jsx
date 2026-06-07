@@ -36,7 +36,7 @@ export default function ForgotPassword() {
         <div className="mt-6 space-y-2 rounded-lg border border-teal-200 bg-teal-50 px-4 py-3 text-sm text-teal-800">
           <p>If an account exists for that email, we sent a reset link. Check your inbox and spam folder.</p>
           <p className="text-xs text-teal-700">
-            Link expires in 1 hour. Did not receive it? Verify SMTP settings on the server or check backend logs in development.
+            Link expires in 1 hour. Did not receive it? Check your spam folder or try again.
           </p>
         </div>
       ) : (

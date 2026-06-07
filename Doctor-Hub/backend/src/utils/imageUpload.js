@@ -117,7 +117,7 @@ async function uploadToSupabaseStorage(file, folder) {
 
   if (error) {
     if (/bucket|not found/i.test(error.message || '')) {
-      throw new Error('Storage bucket missing — run supabase/014_payment_proofs_storage.sql')
+      throw new Error('File upload is temporarily unavailable. Please try again later.')
     }
     throw error
   }

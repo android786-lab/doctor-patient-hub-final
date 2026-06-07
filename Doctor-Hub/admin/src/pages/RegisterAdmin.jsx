@@ -24,9 +24,6 @@ export default function RegisterAdmin() {
   const [checking, setChecking] = useState(false)
   const [setupHint, setSetupHint] = useState(false)
 
-  const supabaseSqlUrl =
-    'https://supabase.com/dashboard/project/tiwjutktvzwkxxwlwwgb/sql/new'
-
   const update = (field, value) => setForm((f) => ({ ...f, [field]: value }))
 
   const onSubmit = async (e) => {
@@ -124,26 +121,11 @@ export default function RegisterAdmin() {
 
               {setupHint && (
                 <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
-                  <p className="font-semibold">Database setup required (one time)</p>
-                  <ol className="mt-2 list-decimal space-y-1 pl-4 text-xs leading-relaxed">
-                    <li>
-                      Open Supabase{' '}
-                      <a
-                        href={supabaseSqlUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="font-semibold text-teal-800 underline"
-                      >
-                        SQL Editor
-                      </a>
-                    </li>
-                    <li>
-                      Copy all SQL from{' '}
-                      <code className="rounded bg-amber-100 px-1">supabase/017_admin_registration_requests.sql</code>{' '}
-                      in the project folder
-                    </li>
-                    <li>Paste → Run → wait a few seconds, then submit this form again</li>
-                  </ol>
+                  <p className="font-semibold">Registration temporarily unavailable</p>
+                  <p className="mt-2 text-xs leading-relaxed">
+                    We could not submit your request right now. Please try again later or contact
+                    hospital support.
+                  </p>
                 </div>
               )}
 

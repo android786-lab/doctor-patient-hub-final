@@ -387,7 +387,7 @@ export async function saveDoctorSchedule(contextUserId, { weekly_schedule, slot_
   }
 
   throw new Error(
-    'Could not save schedule. Run supabase/012_doctors_weekly_schedule.sql in Supabase SQL Editor, or ensure schedules / slots_booked tables exist.'
+    'Could not save schedule. Please try again or contact hospital support.'
   )
 }
 

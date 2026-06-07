@@ -6,13 +6,10 @@ import {
   notifyNetworkErrorOnce,
   NETWORK_ERROR_HINT,
 } from '../utils/networkError.js'
+import { friendlyUserMessage } from '../utils/friendlyUserMessage.js'
 
 function friendlyAuthMessage(message) {
-  if (!message || typeof message !== 'string') return message
-  if (/invalid signature|jwt malformed|jwt expired|not authorized/i.test(message)) {
-    return 'Session expired — please sign in again'
-  }
-  return message
+  return friendlyUserMessage(message)
 }
 
 const api = axios.create({

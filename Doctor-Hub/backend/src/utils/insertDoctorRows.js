@@ -277,7 +277,7 @@ export async function insertDoctorFromAdmin({
     }
 
     throw new Error(
-      'Supabase SQL Editor mein supabase/011_doctors_link_users.sql chalayein, phir dubara doctor add karein.'
+      'Could not add doctor. Please try again or contact hospital support.'
     )
   }
 

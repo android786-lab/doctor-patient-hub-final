@@ -19,7 +19,7 @@ export function isMissingMessagesTable(err) {
 }
 
 export const CHAT_SETUP_ERROR =
-  'Chat table missing. In Supabase SQL Editor run supabase/016_appointment_messages.sql then reload schema.'
+  'Chat is temporarily unavailable. Please try again later.'
 
 export function parseAppointmentStart(appointment) {
   if (appointment?.scheduled_at) {

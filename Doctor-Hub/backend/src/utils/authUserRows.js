@@ -163,7 +163,7 @@ export async function insertPatientProfile({ user_id, full_name, phone }) {
 
     if (isForeignKeyError(error)) {
       console.warn(
-        'patients.user_id references profiles, not users — run supabase/009_patients_link_users.sql'
+        'Could not complete registration. Please try again or contact support.'
       )
       return { ok: false, skipped: true, reason: 'fk_profiles_not_users' }
     }
@@ -182,7 +182,7 @@ export async function insertPatientProfile({ user_id, full_name, phone }) {
 }
 
 const ASSISTANTS_FK_HINT =
-  'Run supabase/023_assistants_link_users.sql in Supabase SQL Editor, then create the assistant again.'
+  'Could not create assistant. Please try again or contact hospital administration.'
 
 /**
  * Links assistant user to a doctor row. Requires assistants.user_id → public.users (023 migration).

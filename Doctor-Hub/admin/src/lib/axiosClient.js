@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { toast } from 'react-toastify'
+import { friendlyUserMessage, NETWORK_UNAVAILABLE } from '../utils/friendlyUserMessage.js'
 
 const client = axios.create()
 
@@ -11,11 +12,7 @@ function isNetworkError(error) {
 let lastNetworkToastAt = 0
 
 function friendlyAuthMessage(message) {
-  if (!message || typeof message !== 'string') return message
-  if (/invalid signature|jwt malformed|jwt expired|not authorized/i.test(message)) {
-    return 'Session expired — please sign in again'
-  }
-  return message
+  return friendlyUserMessage(message)
 }
 
 client.interceptors.response.use(
@@ -43,11 +40,7 @@ client.interceptors.response.use(
       const now = Date.now()
       if (now - lastNetworkToastAt > 12000) {
         lastNetworkToastAt = now
-        toast.error(
-          import.meta.env.PROD
-            ? 'Backend not reachable. Check VITE_BACKEND_URL and that the API is deployed.'
-            : 'Backend not reachable. Run npm run dev from Doctor Hub folder (API on http://localhost:4000).'
-        )
+        toast.error(NETWORK_UNAVAILABLE)
       }
     }
     return Promise.reject(err)

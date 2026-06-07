@@ -185,8 +185,8 @@ export default function Login() {
             </h2>
             <p className="mt-1 text-sm text-slate-500">
               {state === 'Admin'
-                ? 'Super admin & admin use credentials from backend .env (SUPER_ADMIN_* / ADMIN_*)'
-                : 'Doctor account from registration'}
+                ? 'Sign in with your hospital admin account.'
+                : 'Use the email and password from your doctor registration.'}
             </p>
 
             <div className="mt-6 space-y-4">

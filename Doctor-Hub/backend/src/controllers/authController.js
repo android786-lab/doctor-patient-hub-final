@@ -163,7 +163,7 @@ export async function register(req, res) {
 
             warning:
 
-              'Patient profile table uses profiles FK. Run supabase/009_patients_link_users.sql in Supabase for full patient features.',
+              'Could not complete registration. Please try again or contact support.',
 
           })
 
@@ -205,7 +205,7 @@ export async function register(req, res) {
 
         message:
 
-          'Database permission error. In Supabase SQL Editor, run supabase/008_fix_table_grants.sql then try again.',
+          'Could not complete this action. Please try again or contact support.',
 
       })
 
@@ -479,7 +479,7 @@ export async function forgotPassword(req, res) {
 
       return res.status(500).json({
 
-        message: 'Password reset table missing. Run supabase/020_password_reset_and_reports.sql in Supabase.',
+        message: 'Password reset is temporarily unavailable. Please try again later or contact support.',
 
       })
 

@@ -63,7 +63,7 @@ export async function saveDateSchedules(doctorRowId, entries = []) {
     if (error) {
       if (isMissingRelation(error)) {
         throw new Error(
-          'doctor_schedules table missing. Run supabase/022_doctor_module.sql in Supabase SQL Editor.'
+          'Could not load schedule. Please try again later.'
         )
       }
       throw error

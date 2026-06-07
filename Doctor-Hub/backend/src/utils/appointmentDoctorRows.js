@@ -118,7 +118,7 @@ export async function ensureDoctorRecordForUser(contextUserId) {
   }
 
   throw new Error(
-    'Doctor profile row missing. Ask admin to re-add this doctor or run supabase/011_doctors_link_users.sql.'
+    'Doctor profile not found. Please contact hospital administration.'
   )
 }
 

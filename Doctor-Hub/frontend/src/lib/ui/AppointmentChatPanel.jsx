@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import axios from 'axios'
 import { toast } from 'react-toastify'
+import { CHAT_UNAVAILABLE, friendlyUserMessage } from '../../utils/friendlyUserMessage.js'
 
 function formatTime(iso) {
   try {
@@ -57,17 +58,15 @@ export default function AppointmentChatPanel({
 
   const handleApiError = useCallback((err, { toastOnce = false } = {}) => {
     if (isChatSetupError(err)) {
-      const friendly =
-        'Chat database table is missing. Run supabase/016_appointment_messages.sql in Supabase SQL Editor, wait a few seconds, then refresh this page.'
-      setSetupError(friendly)
+      setSetupError(CHAT_UNAVAILABLE)
       if (!setupToastShown.current) {
         setupToastShown.current = true
-        toast.error(friendly)
+        toast.error(CHAT_UNAVAILABLE)
       }
       return true
     }
     if (!toastOnce) {
-      toast.error(err.response?.data?.message || err.message)
+      toast.error(friendlyUserMessage(err.response?.data?.message || err.message))
     }
     return false
   }, [])
@@ -279,16 +278,8 @@ export default function AppointmentChatPanel({
 
       {setupError ? (
         <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
-          <p className="font-semibold">Chat setup required (one time)</p>
+          <p className="font-semibold">Chat unavailable</p>
           <p className="mt-2 text-xs leading-relaxed">{setupError}</p>
-          <a
-            href="https://supabase.com/dashboard/project/tiwjutktvzwkxxwlwwgb/sql/new"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-2 inline-block text-xs font-semibold text-teal-800 underline"
-          >
-            Open Supabase SQL Editor →
-          </a>
         </div>
       ) : null}
 
