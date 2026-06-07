@@ -1,0 +1,19 @@
+{
+  "name": "doctor-hub",
+  "version": "2.0.0",
+  "type": "module",
+  "private": true,
+  "workspaces": ["backend", "frontend", "admin"],
+  "scripts": {
+    "free-ports": "powershell -ExecutionPolicy Bypass -File scripts/free-ports.ps1",
+    "dev": "concurrently -n api,web,admin -c blue,green,magenta \"npm run dev -w backend\" \"npm run dev -w frontend\" \"npm run dev -w admin\"",
+    "dev:clean": "npm run free-ports && npm run dev",
+    "dev:backend": "npm run dev -w backend",
+    "dev:frontend": "npm run dev -w frontend",
+    "dev:admin": "npm run dev -w admin",
+    "install:all": "npm install"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
