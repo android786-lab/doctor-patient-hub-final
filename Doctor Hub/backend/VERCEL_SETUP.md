@@ -10,7 +10,8 @@ Vercel's `404: NOT_FOUND` (white page with Code + ID) means **no serverless func
 |---------|-------|
 | **Root Directory** | `Doctor Hub/backend` |
 | **Framework Preset** | Other or Express |
-| **Build Command** | Override **OFF** (empty) |
+| **Build Command** | Override **OFF** (empty) — **never** `npm run vercel-build` |
+| **package.json** | Must **not** contain a `vercel-build` script (Vercel auto-runs it and skips API functions) |
 | **Output Directory** | Override **OFF** (empty — never `public`) |
 | **Install Command** | `npm install` (default) |
 

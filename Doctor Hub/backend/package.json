@@ -9,8 +9,7 @@
   "scripts": {
     "dev": "nodemon server.js",
     "start": "node server.js",
-    "server": "nodemon server.js",
-    "vercel-build": "node -e \"console.log('Express API — no build step')\""
+    "server": "nodemon server.js"
   },
   "engines": {
     "node": ">=20"
