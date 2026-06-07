@@ -57,7 +57,7 @@ Failed to resolve import "@doctor-hub/ui/..."
 5. **Output Directory:** leave default
 6. Deploy
 
-`backend/vercel.json` routes all traffic to `server.js` as a Node serverless function.
+`backend/api/index.js` is the Vercel serverless entry (re-exports `server.js`). `vercel.json` rewrites all routes to `/api`.
 
 ### Environment variables (Vercel → Settings → Environment Variables)
 
