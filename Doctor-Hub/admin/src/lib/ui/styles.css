@@ -178,17 +178,22 @@
   }
 
   .dh-doctor-photo img {
-    @apply block h-full w-full max-h-full max-w-full object-cover object-center;
+    @apply block object-cover object-center;
+  }
+
+  .dh-doctor-photo:not(.dh-doctor-photo--card) img {
+    @apply h-full w-full max-h-full max-w-full;
   }
 
   .dh-doctor-photo--card {
-    @apply aspect-[5/3] w-full max-h-[8.75rem] min-h-[7rem];
+    @apply h-[6.25rem] w-full sm:h-[7rem];
   }
 
-  .dh-doctor-photo--card img {
-    @apply max-w-none object-cover object-[center_20%];
-    width: 120%;
-    margin-left: -10%;
+  .dh-doctor-photo--card > img {
+    @apply h-full max-w-none;
+    width: 135%;
+    margin-left: -17.5%;
+    object-position: center 22%;
   }
 
   .dh-doctor-photo--book {

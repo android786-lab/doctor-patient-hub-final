@@ -4,6 +4,7 @@ import { AppContext } from '../../context/AppContext.jsx'
 import api from '../../services/api.js'
 import DoctorCard from '../../components/doctors/DoctorCard.jsx'
 import DoctorCardSkeleton from '../../components/doctors/DoctorCardSkeleton.jsx'
+import { DOCTOR_CARD_GRID_CLASS } from '../../components/doctors/doctorCardGrid.js'
 import { DEFAULT_TREATMENTS } from '../../components/doctors/DoctorFilters.jsx'
 import { useDoctorCatalog } from '@doctor-hub/hooks/useDoctorCatalog.js'
 
@@ -210,7 +211,7 @@ export default function FindDoctors() {
           )}
 
           {loading ? (
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+            <div className={DOCTOR_CARD_GRID_CLASS}>
               {[1, 2, 3, 4, 5, 6].map((i) => (
                 <DoctorCardSkeleton key={i} />
               ))}
@@ -218,7 +219,7 @@ export default function FindDoctors() {
           ) : doctors.length === 0 ? (
             <EmptyState onClear={clearAll} />
           ) : (
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+            <div className={DOCTOR_CARD_GRID_CLASS}>
               {doctors.map((doc) => (
                 <DoctorCard
                   key={doc.id}

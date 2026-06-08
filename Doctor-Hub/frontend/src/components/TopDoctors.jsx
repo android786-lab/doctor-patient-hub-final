@@ -2,6 +2,7 @@ import { useContext } from 'react'
 import { Link } from 'react-router-dom'
 import { AppContext } from '../context/AppContext'
 import DoctorCard from './doctors/DoctorCard'
+import { DOCTOR_CARD_GRID_CLASS } from './doctors/doctorCardGrid.js'
 
 export default function TopDoctors() {
   const { doctors } = useContext(AppContext)
@@ -17,7 +18,7 @@ export default function TopDoctors() {
 
   return (
     <div>
-      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+      <div className={DOCTOR_CARD_GRID_CLASS}>
         {top.map((doc) => (
           <DoctorCard key={doc.id} doctor={doc} />
         ))}

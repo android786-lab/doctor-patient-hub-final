@@ -4,6 +4,7 @@ import axios from 'axios'
 import { AppContext } from '../context/AppContext'
 import DoctorCard from '../components/doctors/DoctorCard'
 import DoctorCardSkeleton from '../components/doctors/DoctorCardSkeleton'
+import { DOCTOR_CARD_GRID_CLASS } from '../components/doctors/doctorCardGrid.js'
 import DoctorFilters, { DEFAULT_TREATMENTS } from '../components/doctors/DoctorFilters'
 import SortBar from '../components/doctors/SortBar'
 import { useDoctorCatalog } from '@doctor-hub/hooks/useDoctorCatalog.js'
@@ -167,7 +168,7 @@ export default function Doctors() {
           />
 
           {loading ? (
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+            <div className={DOCTOR_CARD_GRID_CLASS}>
               {[1, 2, 3, 4, 5, 6].map((i) => (
                 <DoctorCardSkeleton key={i} />
               ))}
@@ -197,7 +198,7 @@ export default function Doctors() {
               </button>
             </div>
           ) : (
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+            <div className={DOCTOR_CARD_GRID_CLASS}>
               {sortedDoctors.map((doc) => (
                 <DoctorCard key={doc.id} doctor={doc} />
               ))}
