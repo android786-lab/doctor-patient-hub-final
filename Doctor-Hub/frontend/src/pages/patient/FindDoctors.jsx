@@ -210,7 +210,7 @@ export default function FindDoctors() {
           )}
 
           {loading ? (
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
               {[1, 2, 3, 4, 5, 6].map((i) => (
                 <DoctorCardSkeleton key={i} />
               ))}
@@ -218,7 +218,7 @@ export default function FindDoctors() {
           ) : doctors.length === 0 ? (
             <EmptyState onClear={clearAll} />
           ) : (
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
               {doctors.map((doc) => (
                 <DoctorCard
                   key={doc.id}

@@ -167,7 +167,7 @@ export default function Doctors() {
           />
 
           {loading ? (
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
               {[1, 2, 3, 4, 5, 6].map((i) => (
                 <DoctorCardSkeleton key={i} />
               ))}
@@ -197,7 +197,7 @@ export default function Doctors() {
               </button>
             </div>
           ) : (
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
               {sortedDoctors.map((doc) => (
                 <DoctorCard key={doc.id} doctor={doc} />
               ))}
