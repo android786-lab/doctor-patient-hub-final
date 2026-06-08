@@ -24,9 +24,6 @@ const DOCTOR_SELECT = `
   slot_duration_minutes
 `
 
-const DEFAULT_IMAGE =
-  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPAAAADwCAYAAAA+VemSAAAACXBIWXMAABCcAAAQnAEmzTo0AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAADASURBVHgB7cExAQAAAMKg9U9tCy+gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAeAMBuAABHgAAAABJRU5ErkJggg=='
-
 export async function loadProfiles(userIds) {
   if (!userIds.length) return {}
   const { data } = await supabase
@@ -122,7 +119,12 @@ export function displayName(row, profile) {
 }
 
 export function displayImage(row, profile) {
-  return row.profile_image || profile?.avatar_url || DEFAULT_IMAGE
+  const url = row.profile_image || profile?.avatar_url
+  if (!url || typeof url !== 'string') return null
+  const trimmed = url.trim()
+  if (trimmed.startsWith('data:image')) return null
+  if (/ui-avatars\.com\/api\/\?name=Doctor(?:&|$)/i.test(trimmed)) return null
+  return trimmed
 }
 
 /** Shape expected by CareLink-style frontend cards & admin list */

@@ -181,8 +181,12 @@
     @apply block h-full w-full max-h-full max-w-full object-cover object-center;
   }
 
+  .dh-doctor-photo--card img {
+    @apply object-cover object-center;
+  }
+
   .dh-doctor-photo--card {
-    @apply h-40 w-full;
+    @apply h-40 w-full bg-gradient-to-br from-teal-700 to-teal-900;
   }
 
   .dh-doctor-photo--book {
