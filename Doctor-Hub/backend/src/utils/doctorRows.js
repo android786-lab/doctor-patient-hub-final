@@ -118,13 +118,11 @@ export function displayName(row, profile) {
   return row.full_name || profile?.full_name || 'Doctor'
 }
 
+const DEFAULT_IMAGE =
+  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPAAAADwCAYAAAA+VemSAAAACXBIWXMAABCcAAAQnAEmzTo0AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAADASURBVHgB7cExAQAAAMKg9U9tCy+gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAeAMBuAABHgAAAABJRU5ErkJggg=='
+
 export function displayImage(row, profile) {
-  const url = row.profile_image || profile?.avatar_url
-  if (!url || typeof url !== 'string') return null
-  const trimmed = url.trim()
-  if (trimmed.startsWith('data:image')) return null
-  if (/ui-avatars\.com\/api\/\?name=Doctor(?:&|$)/i.test(trimmed)) return null
-  return trimmed
+  return row.profile_image || profile?.avatar_url || DEFAULT_IMAGE
 }
 
 /** Shape expected by CareLink-style frontend cards & admin list */
