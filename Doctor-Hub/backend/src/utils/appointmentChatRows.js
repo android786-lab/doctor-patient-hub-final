@@ -1,6 +1,12 @@
 import supabase from '../config/supabase.js'
 import { resolvePatientId } from './medicalHistoryRows.js'
 import { resolveDoctorContextIdsOrCreate } from './appointmentDoctorRows.js'
+import {
+  normalizeRoomId,
+  resolveVideoMeetingUrl,
+  buildVideoInviteMessage,
+  extractVideoUrlFromMessage,
+} from './videoMeeting.js'
 
 const DEFAULT_SLOT_MINUTES = 30
 const EARLY_JOIN_MINUTES = 5
@@ -149,6 +155,21 @@ export async function getChatSessionForUser(appointmentId, context) {
   const canRead = canReadConsultChat(appointment)
   const canSend = eligible && window.open
 
+  const videoRoomId = appointment.video_room_id || null
+  let videoUrl = null
+  let videoProvider = null
+  if (videoRoomId) {
+    try {
+      const meeting = await resolveVideoMeetingUrl(videoRoomId, {
+        displayName: role === 'doctor' ? peerName : undefined,
+      })
+      videoUrl = meeting.videoUrl
+      videoProvider = meeting.provider
+    } catch {
+      /* optional */
+    }
+  }
+
   return {
     appointmentId,
     role,
@@ -160,7 +181,9 @@ export async function getChatSessionForUser(appointmentId, context) {
     chatOpen: canSend,
     historyOnly: canRead && !canSend,
     window,
-    videoRoomId: appointment.video_room_id || null,
+    videoRoomId,
+    videoUrl,
+    videoProvider,
     status: appointment.status,
     slotLabel: appointment.slot_date
       ? `${appointment.slot_date} ${appointment.slot_time || ''}`.trim()
@@ -223,8 +246,53 @@ export async function sendMessage(appointmentId, context, body) {
   return data
 }
 
-export async function getOrCreateVideoRoom(appointmentId, context) {
+async function postVideoInviteIfNeeded(appointmentId, context, videoUrl) {
+  const { role, userId } = context
   const { appointment } = await resolveChatParticipant(appointmentId, context)
+
+  const senderName =
+    role === 'doctor'
+      ? appointment.doc_data?.name || 'Doctor'
+      : appointment.user_data?.name || 'Patient'
+
+  const body = buildVideoInviteMessage({ senderName, role, videoUrl })
+
+  const { data: recent } = await supabase
+    .from('appointment_messages')
+    .select('id, body, created_at, sender_id')
+    .eq('appointment_id', appointmentId)
+    .order('created_at', { ascending: false })
+    .limit(5)
+
+  const twoMinAgo = Date.now() - 2 * 60 * 1000
+  const duplicate = (recent || []).some(
+    (m) =>
+      m.sender_id === userId &&
+      extractVideoUrlFromMessage(m.body) === videoUrl &&
+      new Date(m.created_at).getTime() > twoMinAgo
+  )
+  if (duplicate) return null
+
+  const { data, error } = await supabase
+    .from('appointment_messages')
+    .insert({
+      appointment_id: appointmentId,
+      sender_id: userId,
+      sender_role: role,
+      body,
+    })
+    .select()
+    .single()
+
+  if (error) {
+    if (isMissingMessagesTable(error)) return null
+    throw error
+  }
+  return data
+}
+
+export async function getOrCreateVideoRoom(appointmentId, context) {
+  const { appointment, role, userId } = await resolveChatParticipant(appointmentId, context)
   if (!isConsultEligible(appointment)) {
     throw new Error('Video is only for confirmed appointments')
   }
@@ -235,7 +303,7 @@ export async function getOrCreateVideoRoom(appointmentId, context) {
 
   let roomId = appointment.video_room_id
   if (!roomId) {
-    roomId = `doctorhub-${String(appointmentId).replace(/-/g, '').slice(0, 16)}`
+    roomId = normalizeRoomId(appointmentId)
     const { error } = await supabase
       .from('appointments')
       .update({ video_room_id: roomId })
@@ -243,8 +311,25 @@ export async function getOrCreateVideoRoom(appointmentId, context) {
     if (error && !isMissingColumn(error)) throw error
   }
 
+  const senderName =
+    role === 'doctor'
+      ? appointment.doc_data?.name || 'Doctor'
+      : appointment.user_data?.name || 'Patient'
+
+  const meeting = await resolveVideoMeetingUrl(roomId, { displayName: senderName })
+  const inviteMessage = await postVideoInviteIfNeeded(
+    appointmentId,
+    { userId, role },
+    meeting.videoUrl
+  )
+
   return {
     roomId,
-    videoUrl: `https://meet.jit.si/${roomId}`,
+    videoUrl: meeting.videoUrl,
+    embedUrl: meeting.embedUrl,
+    provider: meeting.provider,
+    hostHint: meeting.hostHint,
+    inviteSent: !!inviteMessage,
+    inviteMessage,
   }
 }

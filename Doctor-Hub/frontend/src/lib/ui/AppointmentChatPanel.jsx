@@ -2,6 +2,12 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import axios from 'axios'
 import { toast } from 'react-toastify'
 import { CHAT_UNAVAILABLE, friendlyUserMessage } from '../../utils/friendlyUserMessage.js'
+import {
+  extractVideoUrlFromMessage,
+  isVideoCallMessage,
+  meetingUrlFromSession,
+  VIDEO_CALL_PREFIX,
+} from './videoCall.js'
 
 function formatTime(iso) {
   try {
@@ -27,9 +33,95 @@ function formatSlotLabel(label) {
   return label
 }
 
-function jitsiUrl(roomId) {
-  if (!roomId) return null
-  return `https://meet.jit.si/${encodeURIComponent(roomId)}`
+function VideoEmbed({ url, onClose }) {
+  if (!url) return null
+  return (
+    <div className="border-b border-slate-200 bg-slate-900">
+      <div className="flex items-center justify-between gap-2 bg-slate-800 px-3 py-2">
+        <p className="text-xs font-semibold text-white">Live video consultation</p>
+        <div className="flex gap-2">
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="rounded-lg bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-white/20"
+          >
+            Open in tab
+          </a>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg bg-red-600/90 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-red-600"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+      <iframe
+        title="Video consultation"
+        src={url}
+        allow="camera; microphone; fullscreen; display-capture; autoplay"
+        className="h-[min(420px,55vh)] w-full border-0 bg-black"
+      />
+    </div>
+  )
+}
+
+function ChatMessageBubble({ message, mine, onJoinVideo }) {
+  const videoUrl = extractVideoUrlFromMessage(message.body)
+  const isVideo = isVideoCallMessage(message.body)
+
+  if (isVideo && videoUrl) {
+    const lines = message.body.split('\n').filter(Boolean)
+    const headline = lines.find((l) => !l.startsWith('http')) || 'Video call started'
+    return (
+      <div className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
+        <div
+          className={`max-w-[90%] rounded-2xl px-4 py-3 text-sm ${
+            mine
+              ? 'rounded-br-md bg-teal-700 text-white'
+              : 'rounded-bl-md border border-teal-200 bg-teal-50 text-slate-800'
+          }`}
+        >
+          <p className="font-semibold">{headline.replace(VIDEO_CALL_PREFIX, '').trim() || headline}</p>
+          <p className={`mt-1 text-xs ${mine ? 'text-teal-100' : 'text-slate-600'}`}>
+            Same link for both — tap below to join together.
+          </p>
+          <button
+            type="button"
+            onClick={() => onJoinVideo(videoUrl)}
+            className={`mt-3 w-full rounded-xl px-4 py-2.5 text-sm font-bold transition ${
+              mine
+                ? 'bg-white text-teal-800 hover:bg-teal-50'
+                : 'bg-teal-600 text-white hover:bg-teal-700'
+            }`}
+          >
+            Join video call
+          </button>
+          <p className={`mt-2 text-[10px] ${mine ? 'text-teal-200' : 'text-slate-400'}`}>
+            {formatTime(message.created_at)}
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
+      <div
+        className={`max-w-[85%] rounded-2xl px-3 py-2 text-sm ${
+          mine
+            ? 'rounded-br-md bg-teal-600 text-white'
+            : 'rounded-bl-md bg-slate-100 text-slate-800'
+        }`}
+      >
+        <p className="whitespace-pre-wrap break-words">{message.body}</p>
+        <p className={`mt-1 text-[10px] ${mine ? 'text-teal-100' : 'text-slate-400'}`}>
+          {formatTime(message.created_at)}
+        </p>
+      </div>
+    </div>
+  )
 }
 
 /**
@@ -49,12 +141,16 @@ export default function AppointmentChatPanel({
   const [sending, setSending] = useState(false)
   const [videoLoading, setVideoLoading] = useState(false)
   const [videoUrl, setVideoUrl] = useState(null)
+  const [embedUrl, setEmbedUrl] = useState(null)
+  const [hostHint, setHostHint] = useState(null)
   const [setupError, setSetupError] = useState(null)
   const chatScrollRef = useRef(null)
   const lastMessageIdRef = useRef(null)
+  const lastVideoNotifyRef = useRef(null)
   const setupToastShown = useRef(false)
 
   const headers = useCallback(() => authHeaders(), [authHeaders])
+  const you = session?.role === 'doctor' ? 'doctor' : 'patient'
 
   const handleApiError = useCallback((err, { toastOnce = false } = {}) => {
     if (isChatSetupError(err)) {
@@ -71,6 +167,12 @@ export default function AppointmentChatPanel({
     return false
   }, [])
 
+  const openVideo = useCallback((url) => {
+    if (!url) return
+    setVideoUrl(url)
+    setEmbedUrl(url)
+  }, [])
+
   const loadSession = useCallback(async () => {
     const { data } = await axios.get(
       `${backendUrl}/api/appointments/chat/${appointmentId}/session`,
@@ -78,8 +180,9 @@ export default function AppointmentChatPanel({
     )
     if (!data.success) throw new Error(data.message)
     setSession(data.session)
-    const url = jitsiUrl(data.session?.videoRoomId)
+    const url = meetingUrlFromSession(data.session)
     if (url) setVideoUrl(url)
+    if (data.session?.hostHint) setHostHint(data.session.hostHint)
     return data.session
   }, [appointmentId, backendUrl, headers])
 
@@ -141,7 +244,7 @@ export default function AppointmentChatPanel({
   useEffect(() => {
     const canSend = session?.canSendChat ?? session?.chatOpen
     if (!canSend || setupError) return undefined
-    const id = setInterval(loadMessages, 5000)
+    const id = setInterval(loadMessages, 3000)
     return () => clearInterval(id)
   }, [session?.canSendChat, session?.chatOpen, loadMessages, setupError])
 
@@ -153,6 +256,23 @@ export default function AppointmentChatPanel({
     if (el) el.scrollTop = el.scrollHeight
   }, [messages])
 
+  useEffect(() => {
+    if (!you || !session) return
+    const peerVideo = [...messages]
+      .reverse()
+      .find((m) => m.sender_role !== you && isVideoCallMessage(m.body))
+    if (!peerVideo || peerVideo.id === lastVideoNotifyRef.current) return
+    lastVideoNotifyRef.current = peerVideo.id
+    const url = extractVideoUrlFromMessage(peerVideo.body)
+    toast.info(
+      `${session.peerName || 'The other person'} started the video call — tap Join below`,
+      {
+        autoClose: 10000,
+        onClick: () => url && openVideo(url),
+      }
+    )
+  }, [messages, you, session, openVideo])
+
   const startVideoCall = async () => {
     setVideoLoading(true)
     try {
@@ -162,12 +282,17 @@ export default function AppointmentChatPanel({
         { headers: headers() }
       )
       if (data.success && data.videoUrl) {
-        setVideoUrl(data.videoUrl)
-        window.open(data.videoUrl, '_blank', 'noopener,noreferrer')
+        openVideo(data.videoUrl)
+        if (data.hostHint) setHostHint(data.hostHint)
+        if (data.inviteMessage) {
+          setMessages((prev) => [...prev, data.inviteMessage])
+        } else {
+          await loadMessages()
+        }
         toast.success(
-          you === 'patient'
-            ? 'Video room opened — ask your doctor to tap Join video call too'
-            : 'Video room opened — patient can join from the same button'
+          you === 'doctor'
+            ? 'Video room opened — your patient was notified in chat'
+            : 'Video room opened — your doctor was notified in chat'
         )
       } else {
         toast.error(data.message || 'Could not start video call')
@@ -180,15 +305,16 @@ export default function AppointmentChatPanel({
   }
 
   const copyVideoLink = async () => {
-    if (!videoUrl) {
+    const url = videoUrl || embedUrl
+    if (!url) {
       await startVideoCall()
       return
     }
     try {
-      await navigator.clipboard.writeText(videoUrl)
-      toast.success('Video link copied — share with the other person')
+      await navigator.clipboard.writeText(url)
+      toast.success('Video link copied — same link for doctor and patient')
     } catch {
-      toast.info(videoUrl)
+      toast.info(url)
     }
   }
 
@@ -231,7 +357,6 @@ export default function AppointmentChatPanel({
     historyOnly &&
     session?.window?.reason &&
     /chat opens|not open yet/i.test(session.window.reason)
-  const you = session?.role === 'doctor' ? 'doctor' : 'patient'
 
   const messageList = (
     <div
@@ -243,27 +368,14 @@ export default function AppointmentChatPanel({
           No messages yet — say hello to start the consultation.
         </p>
       ) : (
-        messages.map((m) => {
-          const mine = m.sender_role === you
-          return (
-            <div key={m.id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
-              <div
-                className={`max-w-[85%] rounded-2xl px-3 py-2 text-sm ${
-                  mine
-                    ? 'rounded-br-md bg-teal-600 text-white'
-                    : 'rounded-bl-md bg-slate-100 text-slate-800'
-                }`}
-              >
-                <p className="whitespace-pre-wrap break-words">{m.body}</p>
-                <p
-                  className={`mt-1 text-[10px] ${mine ? 'text-teal-100' : 'text-slate-400'}`}
-                >
-                  {formatTime(m.created_at)}
-                </p>
-              </div>
-            </div>
-          )
-        })
+        messages.map((m) => (
+          <ChatMessageBubble
+            key={m.id}
+            message={m}
+            mine={m.sender_role === you}
+            onJoinVideo={openVideo}
+          />
+        ))
       )}
     </div>
   )
@@ -332,6 +444,8 @@ export default function AppointmentChatPanel({
           </>
         ) : (
           <>
+            {embedUrl ? <VideoEmbed url={embedUrl} onClose={() => setEmbedUrl(null)} /> : null}
+
             {messageList}
 
             <div className="shrink-0 border-t border-slate-100">
@@ -339,8 +453,16 @@ export default function AppointmentChatPanel({
                 <div className="min-w-0">
                   <p className="text-xs font-semibold text-slate-800">Video consultation</p>
                   <p className="text-[11px] text-slate-500">
-                    Same room for patient and doctor (Jitsi). Create once, both join.
+                    One shared link — both join the same room. Link is sent in chat automatically.
                   </p>
+                  {you === 'patient' && !embedUrl ? (
+                    <p className="mt-1 text-[10px] font-medium text-amber-800">
+                      Tip: If video says &quot;waiting for moderator&quot;, ask your doctor to join first.
+                    </p>
+                  ) : null}
+                  {hostHint ? (
+                    <p className="mt-1 text-[10px] text-amber-700">{hostHint}</p>
+                  ) : null}
                 </div>
                 <div className="flex shrink-0 flex-wrap gap-2">
                   <button
@@ -357,13 +479,13 @@ export default function AppointmentChatPanel({
                     disabled={videoLoading}
                     className="dh-btn px-3 py-1.5 text-xs disabled:opacity-60"
                   >
-                    {videoLoading ? 'Opening…' : videoUrl ? 'Join video call' : 'Start video call'}
+                    {videoLoading ? 'Opening…' : embedUrl ? 'Rejoin video' : 'Start video call'}
                   </button>
                 </div>
               </div>
               {videoUrl ? (
                 <p className="truncate px-3 py-1.5 text-[10px] text-slate-500" title={videoUrl}>
-                  Room: {videoUrl.replace('https://meet.jit.si/', '')}
+                  Shared room: {videoUrl.replace(/^https?:\/\/[^/]+\//, '')}
                 </p>
               ) : null}
               <div className="flex gap-2 p-3">

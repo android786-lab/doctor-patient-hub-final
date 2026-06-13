@@ -18,8 +18,7 @@ export default function PatientAppointmentChat() {
         backLabel="← Messages"
       />
       <p className="mt-3 text-center text-xs text-slate-500">
-        Messages refresh automatically. Use <strong>Start video call</strong> in the chat card for the
-        same room as your doctor.
+        When your doctor starts video, you&apos;ll get a notification and a <strong>Join video call</strong> button in chat — same link for both.
       </p>
     </div>
   )

@@ -69,12 +69,18 @@ export default function useChatNotifications({
         if (isOnChatPage(location.pathname, n.appointmentId)) continue
 
         const path = chatPathForRole(role, n.appointmentId)
+        const isVideo =
+          /VIDEO_CALL|meet\.jit\.si|\.daily\.co/i.test(n.preview || '') ||
+          /video call|video consultation/i.test(n.preview || '')
+
         toast.info(
-          role === 'patient'
-            ? `New message from ${n.peerName} — tap to open chat`
-            : `New message from ${n.peerName} — tap to reply`,
+          isVideo
+            ? `${n.peerName} started a video call — tap to join`
+            : role === 'patient'
+              ? `New message from ${n.peerName} — tap to open chat`
+              : `New message from ${n.peerName} — tap to reply`,
           {
-            autoClose: 8000,
+            autoClose: isVideo ? 12000 : 8000,
             onClick: () => navigate(path),
           }
         )

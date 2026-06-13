@@ -33,7 +33,7 @@ export default function DoctorAppointmentChat() {
         backLabel="← Messages"
       />
       <p className="mx-auto mt-4 max-w-2xl text-center text-xs text-slate-500">
-        Use <strong>Start video call</strong> below — the patient joins the same room from their chat.
+        Tap <strong>Start video call</strong> first — the same link is sent to the patient in chat automatically.
       </p>
     </div>
   )
