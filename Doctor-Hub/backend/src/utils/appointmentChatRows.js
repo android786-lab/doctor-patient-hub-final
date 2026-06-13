@@ -212,7 +212,8 @@ export async function getChatSessionForUser(appointmentId, context) {
       : appointment.user_data?.name || 'Patient'
 
   const canRead = canReadConsultChat(appointment)
-  const canSend = eligible && window.open
+  const completed = appointment.is_completed || appointment.status === 'completed'
+  const canSend = eligible && window.open && !completed
 
   const videoRoomId = appointment.video_room_id || null
   let videoUrl = null
@@ -244,6 +245,10 @@ export async function getChatSessionForUser(appointmentId, context) {
     videoUrl,
     videoProvider,
     status: appointment.status,
+    endedEarly: appointment.ended_early === true,
+    earlyEndReason: appointment.early_end_reason || null,
+    endedBy: appointment.ended_by || null,
+    endedAt: appointment.ended_at || null,
     slotLabel: appointment.slot_date
       ? `${appointment.slot_date} ${appointment.slot_time || ''}`.trim()
       : appointment.scheduled_at,
@@ -277,6 +282,9 @@ export async function sendMessage(appointmentId, context, body) {
   const { appointment, role, userId } = await resolveChatParticipant(appointmentId, context)
   if (!isConsultEligible(appointment)) {
     throw new Error('Chat is only available for confirmed appointments')
+  }
+  if (appointment.is_completed || appointment.status === 'completed') {
+    throw new Error('This appointment has ended — chat is read-only')
   }
   const window = await getAppointmentChatWindowForRow(appointment)
   if (!window.open) {

@@ -19,6 +19,7 @@ export default function AddAssistant() {
     confirm_password: '',
     doctorId: '',
   })
+  const [photo, setPhoto] = useState(null)
   const [loading, setLoading] = useState(false)
 
   const headers = { atoken: aToken, token: aToken }
@@ -46,18 +47,22 @@ export default function AddAssistant() {
       toast.error('Password must be at least 6 characters')
       return
     }
+    if (!photo) {
+      toast.error('Please upload an assistant profile photo')
+      return
+    }
 
     setLoading(true)
     try {
-      const body = {
-        full_name: form.full_name.trim(),
-        email: form.email.trim(),
-        phone: form.phone.trim(),
-        password: form.password,
-      }
-      if (form.doctorId) body.doctorId = form.doctorId
+      const formData = new FormData()
+      formData.append('full_name', form.full_name.trim())
+      formData.append('email', form.email.trim())
+      formData.append('phone', form.phone.trim())
+      formData.append('password', form.password)
+      formData.append('image', photo)
+      if (form.doctorId) formData.append('doctorId', form.doctorId)
 
-      const { data } = await axiosClient.post(`${backendUrl}/api/admin/assistants`, body, {
+      const { data } = await axiosClient.post(`${backendUrl}/api/admin/assistants`, formData, {
         headers,
       })
       toast.success(data.message || 'Assistant created')
@@ -69,6 +74,7 @@ export default function AddAssistant() {
         confirm_password: '',
         doctorId: '',
       })
+      setPhoto(null)
     } catch (e) {
       toast.error(e.response?.data?.message || e.message)
     } finally {
@@ -85,6 +91,21 @@ export default function AddAssistant() {
       />
 
       <form onSubmit={onSubmit} className="dh-card mt-6 max-w-lg space-y-4 p-6">
+        <div>
+          <label className="text-sm font-medium text-slate-700">Profile photo</label>
+          <input
+            required
+            type="file"
+            accept="image/*"
+            className="dh-input mt-1 w-full"
+            onChange={(e) => setPhoto(e.target.files?.[0] || null)}
+          />
+          {photo ? (
+            <p className="mt-1 text-xs text-teal-700">Selected: {photo.name}</p>
+          ) : (
+            <p className="mt-1 text-xs text-slate-500">Required — same as when adding a doctor.</p>
+          )}
+        </div>
         <div>
           <label className="text-sm font-medium text-slate-700">Full name</label>
           <input

@@ -66,7 +66,8 @@ const loginUser = async (req, res) => {
 // Get profile
 const getProfile = async (req, res) => {
     try {
-        const { userId } = req.body
+        const userId = req.userId || req.user?.id || req.body?.userId
+        if (!userId) return res.json({ success: false, message: 'Not authorized' })
         const { data: userData, error } = await supabase
             .from('users').select('id, name, email, image, phone, address, gender, dob').eq('id', userId).single()
         if (error) throw error
@@ -79,7 +80,8 @@ const getProfile = async (req, res) => {
 // Update profile
 const updateProfile = async (req, res) => {
     try {
-        const { userId, name, phone, address, dob, gender } = req.body
+        const userId = req.userId || req.user?.id || req.body?.userId
+        const { name, phone, address, dob, gender } = req.body
         const imageFile = req.file
 
         if (!name || !phone || !dob || !gender) return res.json({ success: false, message: 'Data Missing' })

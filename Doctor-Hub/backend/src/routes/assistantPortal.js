@@ -16,6 +16,7 @@ import {
   getAssistantAppointments,
   getAssistantBookings,
   getAssistantDashboardStats,
+  getPatientAppointmentHistory,
 } from '../controllers/assistantPortalController.js'
 
 const router = Router()
@@ -34,6 +35,7 @@ router.put('/payments/:id/verify', verifyPayment)
 router.put('/payments/:id/reject', rejectPayment)
 router.get('/appointments', getAssistantAppointments)
 router.get('/bookings', getAssistantBookings)
+router.get('/patients/:patientId/history', getPatientAppointmentHistory)
 
 /** Legacy assistant payment UI */
 router.get('/payments/verification', listPaymentsVerification)

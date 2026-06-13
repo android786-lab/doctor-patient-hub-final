@@ -22,6 +22,7 @@ import {
   upsertAssistantAssignment,
 } from '../utils/authUserRows.js'
 import { resolveAssistantAssignment } from '../utils/assistantRows.js'
+import { uploadImageFile } from '../utils/imageUpload.js'
 
 const SALT_ROUNDS = 10
 
@@ -131,6 +132,11 @@ export async function createAssistant(req, res) {
       return res.status(400).json({ message: 'Email already registered' })
     }
 
+    let imageUrl = null
+    if (req.file) {
+      imageUrl = await uploadImageFile(req.file, { folder: 'doctor-hub/profiles' })
+    }
+
     const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS)
     const user = await createAssistantAccount({
       email: normalizedEmail,
@@ -139,6 +145,7 @@ export async function createAssistant(req, res) {
       full_name,
       phone,
       doctorId,
+      image: imageUrl,
     })
 
     const assignment = doctorId ? { doctorId } : null
@@ -152,6 +159,7 @@ export async function createAssistant(req, res) {
         email: user.email,
         name: full_name,
         role: 'assistant',
+        image: imageUrl,
       },
       assignment,
     })

@@ -8,6 +8,7 @@ import {
   authForgotPasswordValidators,
   authResetPasswordValidators,
 } from '../middleware/expressValidators.js'
+import upload from '../../middlewares/multer.js'
 import {
   register,
   login,
@@ -16,6 +17,7 @@ import {
   resetPassword,
   validateResetToken,
   getMe,
+  updateMyProfile,
 } from '../controllers/authController.js'
 import {
   registerAdminRequest,
@@ -25,6 +27,8 @@ import {
 const router = Router()
 
 router.get('/me', authMiddleware, getMe)
+router.patch('/profile', upload.single('image'), authMiddleware, updateMyProfile)
+router.post('/profile', upload.single('image'), authMiddleware, updateMyProfile)
 router.post('/register', authRateLimiter, authRegisterValidators, register)
 router.post('/register-admin', authRateLimiter, registerAdminRequest)
 router.get('/admin-registration/status', getAdminRegistrationStatus)

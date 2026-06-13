@@ -19,6 +19,8 @@ import {
 } from '../utils/authUserRows.js'
 
 import supabase from '../config/supabase.js'
+import { uploadImageFile } from '../utils/imageUpload.js'
+import { resolveDoctorContextIdsOrCreate } from '../utils/appointmentDoctorRows.js'
 
 import { findPendingRequestByEmail } from '../utils/adminRegistrationRows.js'
 
@@ -355,7 +357,7 @@ export async function getMe(req, res) {
 
       .from('users')
 
-      .select('id, email, role, name, image, phone')
+      .select('id, email, role, name, image, phone, address, gender, dob')
 
       .eq('id', userId)
 
@@ -393,6 +395,12 @@ export async function getMe(req, res) {
 
         phone: row.phone || null,
 
+        address: row.address || { line1: '', line2: '' },
+
+        gender: row.gender || null,
+
+        dob: row.dob || null,
+
       },
 
     })
@@ -402,6 +410,170 @@ export async function getMe(req, res) {
     console.error('getMe:', err)
 
     return res.status(500).json({ message: err.message || 'Failed to load profile' })
+
+  }
+
+}
+
+
+
+export async function updateMyProfile(req, res) {
+
+  try {
+
+    const userId = req.user?.id
+
+    if (!userId) {
+
+      return res.status(401).json({ success: false, message: 'Authentication required' })
+
+    }
+
+
+
+    const { name, phone, gender, dob, address } = req.body
+
+    const updates = {}
+
+
+
+    if (name !== undefined && String(name).trim()) {
+
+      updates.name = String(name).trim()
+
+    }
+
+    if (phone !== undefined) updates.phone = phone
+
+    if (gender !== undefined) updates.gender = gender
+
+    if (dob !== undefined) updates.dob = dob
+
+    if (address !== undefined) {
+
+      try {
+
+        updates.address = typeof address === 'string' ? JSON.parse(address) : address
+
+      } catch {
+
+        return res.status(400).json({ success: false, message: 'Invalid address format' })
+
+      }
+
+    }
+
+
+
+    if (req.file) {
+
+      updates.image = await uploadImageFile(req.file, { folder: 'doctor-hub/profiles' })
+
+    }
+
+
+
+    if (Object.keys(updates).length) {
+
+      const { error } = await supabase.from('users').update(updates).eq('id', userId)
+
+      if (error) throw error
+
+    }
+
+
+
+    const role = req.user?.role
+
+    if (updates.image && (role === 'doctor' || !role)) {
+
+      try {
+
+        const { doctorRowId } = await resolveDoctorContextIdsOrCreate(userId)
+
+        if (doctorRowId) {
+
+          const imgPatch = { profile_image: updates.image, image: updates.image }
+
+          for (const patch of [imgPatch, { profile_image: updates.image }]) {
+
+            const { error: docErr } = await supabase
+
+              .from('doctors')
+
+              .update(patch)
+
+              .eq('id', doctorRowId)
+
+            if (!docErr) break
+
+          }
+
+        }
+
+      } catch {
+
+        /* optional doctor row */
+
+      }
+
+    }
+
+
+
+    const { data: row } = await supabase
+
+      .from('users')
+
+      .select('id, email, role, name, image, phone, address, gender, dob')
+
+      .eq('id', userId)
+
+      .maybeSingle()
+
+
+
+    const display = await resolveUserDisplay(row || { id: userId })
+
+
+
+    return res.json({
+
+      success: true,
+
+      message: 'Profile updated',
+
+      user: {
+
+        id: row?.id || userId,
+
+        email: row?.email || req.user?.email,
+
+        role: row?.role || role || 'patient',
+
+        name: display.name,
+
+        full_name: display.name,
+
+        image: display.image,
+
+        phone: row?.phone || null,
+
+        address: row?.address || { line1: '', line2: '' },
+
+        gender: row?.gender || null,
+
+        dob: row?.dob || null,
+
+      },
+
+    })
+
+  } catch (err) {
+
+    console.error('updateMyProfile:', err)
+
+    return res.status(500).json({ success: false, message: err.message || 'Update failed' })
 
   }
 

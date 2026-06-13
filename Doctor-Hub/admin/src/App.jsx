@@ -25,6 +25,7 @@ const SuperAdminUsers = lazy(() => import('./pages/superadmin/SuperAdminUsers'))
 const RegisterAdmin = lazy(() => import('./pages/RegisterAdmin'))
 const AddDoctor = lazy(() => import('./pages/Admin/AddDoctor'))
 const AddAssistant = lazy(() => import('./pages/Admin/AddAssistant'))
+const StaffProfile = lazy(() => import('./pages/Admin/StaffProfile'))
 const VerifyPayments = lazy(() => import('./pages/Admin/VerifyPayments'))
 const AssistantHome = lazy(() => import('./pages/assistant/AssistantHome'))
 const PendingPayments = lazy(() => import('./pages/assistant/PendingPayments'))
@@ -200,6 +201,10 @@ export default function App() {
                         element={assistantGuard(aToken, <AssistantMessages />)}
                       />
                       <Route
+                        path="/assistant/profile"
+                        element={assistantGuard(aToken, <StaffProfile />)}
+                      />
+                      <Route
                         path="/assistant/appointments/:appointmentId/chat"
                         element={assistantGuard(aToken, <DoctorAppointmentChat />)}
                       />
@@ -268,6 +273,14 @@ export default function App() {
                       <Route
                         path="/add-assistant"
                         element={adminGuard(aToken, ['admin', 'super_admin'], <AddAssistant />)}
+                      />
+                      <Route
+                        path="/admin/profile"
+                        element={adminGuard(aToken, ['admin', 'super_admin'], <StaffProfile />)}
+                      />
+                      <Route
+                        path="/superadmin/profile"
+                        element={adminGuard(aToken, ['super_admin'], <StaffProfile />)}
                       />
                       <Route path="/" element={<Navigate to={home} replace />} />
                       <Route path="*" element={<NotFound />} />

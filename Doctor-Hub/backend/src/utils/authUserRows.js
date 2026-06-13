@@ -26,8 +26,9 @@ function isForeignKeyError(err) {
   return err?.code === '23503' || /foreign key|violates foreign key/i.test(msg)
 }
 
-export async function insertUser({ email, password, role, full_name, phone }) {
+export async function insertUser({ email, password, role, full_name, phone, image }) {
   const normalizedEmail = email.toLowerCase().trim()
+  const avatar = image || placeholderAvatarUrl(full_name)
 
   const attempts = [
     {
@@ -36,6 +37,7 @@ export async function insertUser({ email, password, role, full_name, phone }) {
       password,
       role,
       phone: phone || null,
+      image: avatar,
       is_active: true,
     },
     {
@@ -379,6 +381,7 @@ export async function createAssistantAccount({
   phone,
   doctorId,
   passwordHash,
+  image,
 }) {
   const normalizedEmail = email.toLowerCase().trim()
   const plainPassword = password
@@ -390,6 +393,7 @@ export async function createAssistantAccount({
     role: 'assistant',
     full_name,
     phone,
+    image,
   })
 
   try {

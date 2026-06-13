@@ -34,6 +34,63 @@ function formatSlotLabel(label) {
   return label
 }
 
+function isBeforeScheduledSlotEnd(window) {
+  if (!window?.slotStart) return false
+  const start = new Date(window.slotStart)
+  const durationMin = window.slotDurationMinutes || 60
+  const slotEnd = new Date(start.getTime() + durationMin * 60 * 1000)
+  return new Date() < slotEnd
+}
+
+function EndAppointmentModal({ open, onClose, onConfirm, loading, requireReason, roleLabel }) {
+  const [reason, setReason] = useState('')
+
+  useEffect(() => {
+    if (open) setReason('')
+  }, [open])
+
+  if (!open) return null
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
+      <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+        <h2 className="font-display text-lg font-semibold text-slate-900">End appointment</h2>
+        <p className="mt-2 text-sm text-slate-600">
+          {requireReason
+            ? 'You are ending before the scheduled time. Please give a reason — it will be sent to the patient and your assistant.'
+            : `${roleLabel} can end the consultation here. The visit will be marked completed.`}
+        </p>
+        {requireReason ? (
+          <textarea
+            className="mt-4 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
+            rows={4}
+            placeholder="Reason for ending early…"
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+          />
+        ) : null}
+        <div className="mt-5 flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            disabled={loading || (requireReason && !reason.trim())}
+            onClick={() => onConfirm(requireReason ? reason.trim() : undefined)}
+            className="rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60"
+          >
+            {loading ? 'Ending…' : 'End appointment'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function VideoEmbed({ url, onClose }) {
   if (!url) return null
   return (
@@ -144,6 +201,8 @@ export default function AppointmentChatPanel({
   const [videoUrl, setVideoUrl] = useState(null)
   const [videoMode, setVideoMode] = useState(null)
   const [setupError, setSetupError] = useState(null)
+  const [endModalOpen, setEndModalOpen] = useState(false)
+  const [ending, setEnding] = useState(false)
   const chatScrollRef = useRef(null)
   const lastMessageIdRef = useRef(null)
   const lastVideoNotifyRef = useRef(null)
@@ -330,6 +389,41 @@ export default function AppointmentChatPanel({
     }
   }
 
+  const confirmEndAppointment = async (reason) => {
+    setEnding(true)
+    try {
+      const { data } = await axios.post(
+        `${backendUrl}/api/appointments/chat/${appointmentId}/end`,
+        reason ? { reason } : {},
+        { headers: headers() }
+      )
+      if (data.success) {
+        closeVideoCall()
+        toast.success(data.message || 'Appointment ended')
+        if (data.messageBody) {
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: `end-${Date.now()}`,
+              body: data.messageBody,
+              sender_role: you,
+              created_at: new Date().toISOString(),
+            },
+          ])
+        }
+        await loadSession()
+        await loadMessages()
+      } else {
+        toast.error(data.message || 'Could not end appointment')
+      }
+    } catch (err) {
+      handleApiError(err)
+    } finally {
+      setEnding(false)
+      setEndModalOpen(false)
+    }
+  }
+
   const send = async () => {
     const body = text.trim()
     if (!body) return
@@ -369,6 +463,7 @@ export default function AppointmentChatPanel({
     historyOnly &&
     session?.window?.reason &&
     /chat opens|not open yet/i.test(session.window.reason)
+  const endRequiresReason = you === 'doctor' && isBeforeScheduledSlotEnd(session?.window)
 
   const messageList = (
     <div
@@ -394,6 +489,14 @@ export default function AppointmentChatPanel({
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-4">
+      <EndAppointmentModal
+        open={endModalOpen}
+        onClose={() => setEndModalOpen(false)}
+        onConfirm={confirmEndAppointment}
+        loading={ending}
+        requireReason={endRequiresReason}
+        roleLabel={you === 'doctor' ? 'Doctor' : 'Patient'}
+      />
       {backLink ? (
         <a href={backLink} className="text-sm font-medium text-teal-700 hover:underline">
           {backLabel}
@@ -454,11 +557,19 @@ export default function AppointmentChatPanel({
                 </>
               ) : (
                 <>
-                  <p className="font-medium">Appointment slot ended — read-only</p>
+                  <p className="font-medium">
+                    {session?.endedEarly ? 'Appointment ended early — read-only' : 'Appointment slot ended — read-only'}
+                  </p>
                   <p className="mt-1 text-xs">
                     You can still read messages from your visit. New replies are disabled after the
                     slot window.
                   </p>
+                  {session?.earlyEndReason ? (
+                    <p className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                      <span className="font-semibold">Reason: </span>
+                      {session.earlyEndReason}
+                    </p>
+                  ) : null}
                 </>
               )}
             </div>
@@ -496,6 +607,13 @@ export default function AppointmentChatPanel({
                   ) : null}
                 </div>
                 <div className="flex shrink-0 flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setEndModalOpen(true)}
+                    className="rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-100"
+                  >
+                    End appointment
+                  </button>
                   <button
                     type="button"
                     onClick={startVideoCall}

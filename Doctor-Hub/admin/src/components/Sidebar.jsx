@@ -52,6 +52,7 @@ function staffLinks(role) {
       { to: '/assistant/appointments', label: 'All appointments', icon: 'calendar' },
       { to: '/assistant/bookings', label: 'Bookings', icon: 'calendar' },
       { to: '/assistant/messages', label: 'Messages', icon: 'chat', showBadge: true },
+      { to: '/assistant/profile', label: 'My profile', icon: 'user' },
     ]
   }
   const adminCore = [
@@ -71,6 +72,7 @@ function staffLinks(role) {
       { to: '/verify-payments', label: 'Verify payments', icon: 'verify' },
       { to: '/add-doctor', label: 'Add doctor', icon: 'add' },
       { to: '/add-assistant', label: 'Add assistant', icon: 'add' },
+      { to: '/superadmin/profile', label: 'My profile', icon: 'user' },
     ]
   }
   return [
@@ -78,6 +80,7 @@ function staffLinks(role) {
     { to: '/verify-payments', label: 'Verify payments', icon: 'verify' },
     { to: '/add-doctor', label: 'Add doctor', icon: 'add' },
     { to: '/add-assistant', label: 'Add assistant', icon: 'add' },
+    { to: '/admin/profile', label: 'My profile', icon: 'user' },
   ]
 }
 

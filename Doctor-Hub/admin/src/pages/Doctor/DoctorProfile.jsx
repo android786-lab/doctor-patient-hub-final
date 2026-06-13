@@ -74,6 +74,8 @@ export default function DoctorProfile() {
 
   const [availabilitySaving, setAvailabilitySaving] = useState(false)
 
+  const [imageFile, setImageFile] = useState(null)
+
 
 
   useEffect(() => {
@@ -93,6 +95,22 @@ export default function DoctorProfile() {
     setSaving(true)
 
     try {
+
+      if (imageFile) {
+
+        const formData = new FormData()
+
+        formData.append('image', imageFile)
+
+        if (profileData.name) formData.append('name', profileData.name)
+
+        await axiosClient.post(`${backendUrl}/api/auth/profile`, formData, {
+
+          headers: { dtoken: dToken, token: dToken },
+
+        })
+
+      }
 
       const payload = {
 
@@ -129,6 +147,8 @@ export default function DoctorProfile() {
         toast.success(data.message || 'Profile saved')
 
         setIsEdit(false)
+
+        setImageFile(null)
 
         if (data.profile) setProfileData(data.profile)
 
@@ -294,6 +314,8 @@ export default function DoctorProfile() {
 
                 setIsEdit(false)
 
+                setImageFile(null)
+
                 getProfileData()
 
               }}
@@ -334,17 +356,32 @@ export default function DoctorProfile() {
 
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
 
-            <DoctorPhoto
-
-              src={profileData.image}
-
-              name={displayName}
-
-              variant="thumb"
-
-              className="!h-20 !w-20 shrink-0 rounded-xl ring-2 ring-teal-100"
-
-            />
+            {isEdit ? (
+              <label className="group relative block shrink-0 cursor-pointer">
+                <DoctorPhoto
+                  src={imageFile ? URL.createObjectURL(imageFile) : profileData.image}
+                  name={displayName}
+                  variant="thumb"
+                  className="!h-20 !w-20 shrink-0 rounded-xl ring-2 ring-teal-100"
+                />
+                <span className="absolute inset-0 flex items-center justify-center rounded-xl bg-slate-900/40 text-[10px] font-medium text-white opacity-0 transition group-hover:opacity-100">
+                  Change
+                </span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="sr-only"
+                  onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+                />
+              </label>
+            ) : (
+              <DoctorPhoto
+                src={profileData.image}
+                name={displayName}
+                variant="thumb"
+                className="!h-20 !w-20 shrink-0 rounded-xl ring-2 ring-teal-100"
+              />
+            )}
 
             <div className="min-w-0 flex-1">
 

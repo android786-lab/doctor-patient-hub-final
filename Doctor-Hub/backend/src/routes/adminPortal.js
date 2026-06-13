@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import authAdmin from '../../middlewares/authAdmin.js'
+import upload from '../../middlewares/multer.js'
 import { requireRoles } from '../middleware/requireRoles.js'
 import { validate, schemas } from '../middleware/validate.js'
 import {
@@ -107,6 +108,7 @@ router.post(
   '/assistants',
   authAdmin,
   requireRoles('admin', 'super_admin'),
+  upload.single('image'),
   validate(schemas.createAssistant),
   createAssistant
 )

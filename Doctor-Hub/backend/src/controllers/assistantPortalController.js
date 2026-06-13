@@ -239,6 +239,7 @@ async function listDoctorAppointments(req, { bookingView = false } = {}) {
     const pay = payMap[row.id]
     const base = {
       id: row.id,
+      patient_id: row.user_id || row.patient_id || null,
       patient_name: row.user_data?.name || row.patient_name || 'Patient',
       patient_image: row.user_data?.image || null,
       doctor_name: row.doc_data?.name || assignment.doctorName,
@@ -250,6 +251,10 @@ async function listDoctorAppointments(req, { bookingView = false } = {}) {
       payment_status: pay?.status || null,
       cancelled: row.cancelled === true,
       is_completed: row.is_completed === true,
+      ended_early: row.ended_early === true,
+      early_end_reason: row.early_end_reason || null,
+      ended_by: row.ended_by || null,
+      ended_at: row.ended_at || null,
     }
     if (bookingView) {
       return {
@@ -287,6 +292,54 @@ export async function getAssistantBookings(req, res) {
     return res.status(err.status || 500).json({
       success: false,
       message: err.message || 'Failed to load bookings',
+    })
+  }
+}
+
+export async function getPatientAppointmentHistory(req, res) {
+  try {
+    const { patientId } = req.params
+    if (!patientId) {
+      return res.status(400).json({ success: false, message: 'patientId is required' })
+    }
+
+    const assignment = req.assistantAssignment
+    if (!assignment) {
+      return res.status(403).json({ success: false, message: 'No doctor assigned' })
+    }
+
+    const raw = await fetchAppointmentsForDoctor(assignment.doctorUserId)
+    const scoped = filterAppointmentsForDoctorRow(raw, assignment.doctorRowId)
+    const forPatient = scoped.filter(
+      (row) =>
+        row.user_id === patientId ||
+        row.patient_id === patientId ||
+        row.user_data?.id === patientId
+    )
+
+    const mapped = await mapAppointmentsForDoctorUi(forPatient)
+    const history = mapped
+      .map((row) => ({
+        id: row.id,
+        appointment_date: formatAppointmentDate(row),
+        slot_date: row.slot_date,
+        slot_time: row.slot_time,
+        status: row.status || (row.cancelled ? 'cancelled' : 'pending'),
+        is_completed: row.is_completed === true || row.status === 'completed',
+        ended_early: row.ended_early === true,
+        early_end_reason: row.early_end_reason || null,
+        ended_by: row.ended_by || null,
+        ended_at: row.ended_at || null,
+        amount: Number(row.amount ?? 0),
+      }))
+      .sort((a, b) => String(b.appointment_date).localeCompare(String(a.appointment_date)))
+
+    return res.json({ success: true, patientId, history, count: history.length })
+  } catch (err) {
+    console.error('getPatientAppointmentHistory:', err)
+    return res.status(err.status || 500).json({
+      success: false,
+      message: err.message || 'Failed to load patient history',
     })
   }
 }

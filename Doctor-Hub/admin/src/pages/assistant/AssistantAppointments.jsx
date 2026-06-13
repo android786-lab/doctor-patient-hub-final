@@ -82,6 +82,7 @@ export default function AssistantAppointments() {
                 <th className="px-4 py-3">Date / time</th>
                 <th className="px-4 py-3">Amount</th>
                 <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3">Notes</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -92,6 +93,15 @@ export default function AssistantAppointments() {
                   <td className="px-4 py-3">{formatMoney(row.amount)}</td>
                   <td className="px-4 py-3">
                     <StatusBadge status={row.status} cancelled={row.cancelled} />
+                  </td>
+                  <td className="max-w-xs px-4 py-3 text-xs text-slate-600">
+                    {row.ended_early && row.early_end_reason ? (
+                      <span className="rounded-lg bg-amber-50 px-2 py-1 text-amber-900">
+                        Early end: {row.early_end_reason}
+                      </span>
+                    ) : (
+                      '—'
+                    )}
                   </td>
                 </tr>
               ))}

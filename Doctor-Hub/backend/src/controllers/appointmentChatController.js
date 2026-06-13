@@ -4,6 +4,7 @@ import {
   sendMessage,
   getOrCreateVideoRoom,
 } from '../utils/appointmentChatRows.js'
+import { endLiveAppointment } from '../utils/appointmentEndRows.js'
 import {
   getChatUnreadSummary,
   listChatInbox,
@@ -94,5 +95,23 @@ export async function postVideoRoom(req, res) {
   } catch (err) {
     const status = err.status || 400
     return res.status(status).json({ success: false, message: err.message })
+  }
+}
+
+export async function postEndAppointment(req, res) {
+  try {
+    const { appointmentId } = req.params
+    const { reason } = req.body || {}
+    const result = await endLiveAppointment(appointmentId, contextFromReq(req), { reason })
+    return res.json({
+      success: true,
+      message: result.endedEarly
+        ? 'Appointment ended early — reason saved for patient and care team'
+        : 'Appointment ended',
+      ...result,
+    })
+  } catch (err) {
+    const status = err.status || 400
+    return res.status(status).json({ success: false, message: err.message, code: err.code })
   }
 }
