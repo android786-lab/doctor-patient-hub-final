@@ -8,6 +8,12 @@ import {
   extractVideoUrlFromMessage,
 } from './videoMeeting.js'
 
+const WEBRTC_SIGNAL_PREFIX = '__WEBRTC_SIGNAL__:'
+
+function isWebRtcSignalBody(body) {
+  return typeof body === 'string' && body.startsWith(WEBRTC_SIGNAL_PREFIX)
+}
+
 const DEFAULT_SLOT_MINUTES = 60
 const EARLY_JOIN_MINUTES = 10
 const POST_SLOT_GRACE_MINUTES = 15
@@ -260,7 +266,7 @@ export async function listMessages(appointmentId, context) {
     }
     throw error
   }
-  return data || []
+  return (data || []).filter((m) => !isWebRtcSignalBody(m.body))
 }
 
 export async function sendMessage(appointmentId, context, body) {
@@ -299,7 +305,7 @@ export async function sendMessage(appointmentId, context, body) {
   return data
 }
 
-async function postVideoInviteIfNeeded(appointmentId, context, videoUrl) {
+async function postVideoInviteIfNeeded(appointmentId, context, meeting) {
   const { role, userId } = context
   const { appointment } = await resolveChatParticipant(appointmentId, context)
 
@@ -308,7 +314,12 @@ async function postVideoInviteIfNeeded(appointmentId, context, videoUrl) {
       ? appointment.doc_data?.name || 'Doctor'
       : appointment.user_data?.name || 'Patient'
 
-  const body = buildVideoInviteMessage({ senderName, role, videoUrl })
+  const body = buildVideoInviteMessage({
+    senderName,
+    role,
+    videoUrl: meeting.videoUrl,
+    provider: meeting.provider,
+  })
 
   const { data: recent } = await supabase
     .from('appointment_messages')
@@ -321,7 +332,7 @@ async function postVideoInviteIfNeeded(appointmentId, context, videoUrl) {
   const duplicate = (recent || []).some(
     (m) =>
       m.sender_id === userId &&
-      extractVideoUrlFromMessage(m.body) === videoUrl &&
+      m.body.includes('🎥 VIDEO_CALL') &&
       new Date(m.created_at).getTime() > twoMinAgo
   )
   if (duplicate) return null
@@ -373,7 +384,7 @@ export async function getOrCreateVideoRoom(appointmentId, context) {
   const inviteMessage = await postVideoInviteIfNeeded(
     appointmentId,
     { userId, role },
-    meeting.videoUrl
+    meeting
   )
 
   return {

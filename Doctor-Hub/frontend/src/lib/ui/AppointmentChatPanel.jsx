@@ -8,6 +8,7 @@ import {
   meetingUrlFromSession,
   VIDEO_CALL_PREFIX,
 } from './videoCall.js'
+import WebRtcVideoCall from './WebRtcVideoCall.jsx'
 
 function formatTime(iso) {
   try {
@@ -71,7 +72,7 @@ function ChatMessageBubble({ message, mine, onJoinVideo }) {
   const videoUrl = extractVideoUrlFromMessage(message.body)
   const isVideo = isVideoCallMessage(message.body)
 
-  if (isVideo && videoUrl) {
+  if (isVideo && (videoUrl || true)) {
     const lines = message.body.split('\n').filter(Boolean)
     const headline = lines.find((l) => !l.startsWith('http')) || 'Video call started'
     return (
@@ -89,7 +90,7 @@ function ChatMessageBubble({ message, mine, onJoinVideo }) {
           </p>
           <button
             type="button"
-            onClick={() => onJoinVideo(videoUrl)}
+            onClick={() => onJoinVideo(videoUrl || 'webrtc')}
             className={`mt-3 w-full rounded-xl px-4 py-2.5 text-sm font-bold transition ${
               mine
                 ? 'bg-white text-teal-800 hover:bg-teal-50'
@@ -141,8 +142,7 @@ export default function AppointmentChatPanel({
   const [sending, setSending] = useState(false)
   const [videoLoading, setVideoLoading] = useState(false)
   const [videoUrl, setVideoUrl] = useState(null)
-  const [embedUrl, setEmbedUrl] = useState(null)
-  const [hostHint, setHostHint] = useState(null)
+  const [videoMode, setVideoMode] = useState(null)
   const [setupError, setSetupError] = useState(null)
   const chatScrollRef = useRef(null)
   const lastMessageIdRef = useRef(null)
@@ -167,10 +167,17 @@ export default function AppointmentChatPanel({
     return false
   }, [])
 
-  const openVideo = useCallback((url) => {
-    if (!url) return
-    setVideoUrl(url)
-    setEmbedUrl(url)
+  const openVideoCall = useCallback((urlOrMode) => {
+    if (urlOrMode && urlOrMode !== 'webrtc' && String(urlOrMode).startsWith('http')) {
+      setVideoUrl(urlOrMode)
+      setVideoMode('daily')
+      return
+    }
+    setVideoMode('webrtc')
+  }, [])
+
+  const closeVideoCall = useCallback(() => {
+    setVideoMode(null)
   }, [])
 
   const loadSession = useCallback(async () => {
@@ -182,7 +189,6 @@ export default function AppointmentChatPanel({
     setSession(data.session)
     const url = meetingUrlFromSession(data.session)
     if (url) setVideoUrl(url)
-    if (data.session?.hostHint) setHostHint(data.session.hostHint)
     return data.session
   }, [appointmentId, backendUrl, headers])
 
@@ -278,10 +284,10 @@ export default function AppointmentChatPanel({
       `${session.peerName || 'The other person'} started the video call — tap Join below`,
       {
         autoClose: 10000,
-        onClick: () => url && openVideo(url),
+        onClick: () => openVideoCall(url || 'webrtc'),
       }
     )
-  }, [messages, you, session, openVideo])
+  }, [messages, you, session, openVideoCall])
 
   const startVideoCall = async () => {
     setVideoLoading(true)
@@ -291,9 +297,12 @@ export default function AppointmentChatPanel({
         {},
         { headers: headers() }
       )
-      if (data.success && data.videoUrl) {
-        openVideo(data.videoUrl)
-        if (data.hostHint) setHostHint(data.hostHint)
+      if (data.success) {
+        if (data.provider === 'daily' && data.videoUrl) {
+          openVideoCall(data.videoUrl)
+        } else {
+          openVideoCall('webrtc')
+        }
         if (data.inviteMessage) {
           setMessages((prev) => [...prev, data.inviteMessage])
         } else {
@@ -301,8 +310,8 @@ export default function AppointmentChatPanel({
         }
         toast.success(
           you === 'doctor'
-            ? 'Video room opened — your patient was notified in chat'
-            : 'Video room opened — your doctor was notified in chat'
+            ? 'Video started — patient notified in chat. Allow camera when prompted.'
+            : 'Video started — doctor notified. Allow camera when prompted.'
         )
       } else {
         toast.error(data.message || 'Could not start video call')
@@ -311,20 +320,6 @@ export default function AppointmentChatPanel({
       handleApiError(err)
     } finally {
       setVideoLoading(false)
-    }
-  }
-
-  const copyVideoLink = async () => {
-    const url = videoUrl || embedUrl
-    if (!url) {
-      await startVideoCall()
-      return
-    }
-    try {
-      await navigator.clipboard.writeText(url)
-      toast.success('Video link copied — same link for doctor and patient')
-    } catch {
-      toast.info(url)
     }
   }
 
@@ -383,7 +378,7 @@ export default function AppointmentChatPanel({
             key={m.id}
             message={m}
             mine={m.sender_role === you}
-            onJoinVideo={openVideo}
+            onJoinVideo={openVideoCall}
           />
         ))
       )}
@@ -464,7 +459,19 @@ export default function AppointmentChatPanel({
           </>
         ) : (
           <>
-            {embedUrl ? <VideoEmbed url={embedUrl} onClose={() => setEmbedUrl(null)} /> : null}
+            {videoMode === 'webrtc' ? (
+              <WebRtcVideoCall
+                appointmentId={appointmentId}
+                backendUrl={backendUrl}
+                authHeaders={authHeaders}
+                role={you}
+                displayName={session?.peerName}
+                onClose={closeVideoCall}
+              />
+            ) : null}
+            {videoMode === 'daily' && videoUrl ? (
+              <VideoEmbed url={videoUrl} onClose={closeVideoCall} />
+            ) : null}
 
             {messageList}
 
@@ -473,41 +480,31 @@ export default function AppointmentChatPanel({
                 <div className="min-w-0">
                   <p className="text-xs font-semibold text-slate-800">Video consultation</p>
                   <p className="text-[11px] text-slate-500">
-                    One shared link — both join the same room. Link is sent in chat automatically.
+                    In-browser video — no Jitsi login. Doctor starts first; patient joins from chat.
                   </p>
-                  {you === 'patient' && !embedUrl ? (
-                    <p className="mt-1 text-[10px] font-medium text-amber-800">
-                      Tip: If video says &quot;waiting for moderator&quot;, ask your doctor to join first.
+                  {you === 'patient' && !videoMode ? (
+                    <p className="mt-1 text-[10px] font-medium text-teal-800">
+                      Wait for your doctor to start, then tap Join video call.
                     </p>
-                  ) : null}
-                  {hostHint ? (
-                    <p className="mt-1 text-[10px] text-amber-700">{hostHint}</p>
                   ) : null}
                 </div>
                 <div className="flex shrink-0 flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={copyVideoLink}
-                    disabled={videoLoading}
-                    className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60"
-                  >
-                    Copy link
-                  </button>
                   <button
                     type="button"
                     onClick={startVideoCall}
                     disabled={videoLoading}
                     className="dh-btn px-3 py-1.5 text-xs disabled:opacity-60"
                   >
-                    {videoLoading ? 'Opening…' : embedUrl ? 'Rejoin video' : 'Start video call'}
+                    {videoLoading
+                      ? 'Starting…'
+                      : videoMode
+                        ? 'Rejoin video'
+                        : you === 'doctor'
+                          ? 'Start video call'
+                          : 'Join video call'}
                   </button>
                 </div>
               </div>
-              {videoUrl ? (
-                <p className="truncate px-3 py-1.5 text-[10px] text-slate-500" title={videoUrl}>
-                  Shared room: {videoUrl.replace(/^https?:\/\/[^/]+\//, '')}
-                </p>
-              ) : null}
               <div className="flex gap-2 p-3">
                 <input
                   type="text"

@@ -74,22 +74,29 @@ export async function resolveVideoMeetingUrl(roomId, { displayName } = {}) {
 
   const videoUrl = buildJitsiMeetingUrl(roomId, { displayName })
   return {
-    provider: 'jitsi',
-    videoUrl,
-    embedUrl: videoUrl,
-    hostHint:
-      'If you see "waiting for moderator", ask your doctor to tap Join video call first (doctors open the room).',
+    provider: 'webrtc',
+    videoUrl: null,
+    embedUrl: null,
+    hostHint: null,
+    roomId,
   }
 }
 
-export function buildVideoInviteMessage({ senderName, role, videoUrl }) {
+export function buildVideoInviteMessage({ senderName, role, videoUrl, provider }) {
   const who = senderName || (role === 'doctor' ? 'Your doctor' : 'Your patient')
-  return `${VIDEO_CALL_PREFIX}\n${who} has started the video consultation.\nJoin here: ${videoUrl}`
+  if (provider === 'daily' && videoUrl) {
+    return `${VIDEO_CALL_PREFIX}\n${who} has started the video consultation.\nJoin here: ${videoUrl}`
+  }
+  return `${VIDEO_CALL_PREFIX}\n${who} has started the video consultation.\nTap "Join video call" below — works in your browser, no extra login.`
 }
 
 export function extractVideoUrlFromMessage(body) {
   if (!body || typeof body !== 'string') return null
-  if (!body.includes(VIDEO_CALL_PREFIX) && !/meet\.jit\.si|\.daily\.co/i.test(body)) return null
+  if (!body.includes(VIDEO_CALL_PREFIX)) return null
   const match = body.match(/https?:\/\/[^\s]+/)
   return match ? match[0].replace(/[.,]+$/, '') : null
+}
+
+export function isInAppVideoInvite(body) {
+  return typeof body === 'string' && body.includes(VIDEO_CALL_PREFIX)
 }

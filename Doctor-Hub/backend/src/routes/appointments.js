@@ -28,6 +28,10 @@ import {
   getChatInbox,
   postChatMarkRead,
 } from '../controllers/appointmentChatController.js'
+import {
+  postWebRtcSignalMessage,
+  getWebRtcSignals,
+} from '../controllers/webrtcController.js'
 
 const router = Router()
 
@@ -48,6 +52,8 @@ router.post('/chat/:appointmentId/read', authConsultParticipant, postChatMarkRea
 router.get('/chat/:appointmentId/messages', authConsultParticipant, getChatMessages)
 router.post('/chat/:appointmentId/messages', authConsultParticipant, postChatMessage)
 router.post('/chat/:appointmentId/video', authConsultParticipant, postVideoRoom)
+router.post('/chat/:appointmentId/webrtc/signal', authConsultParticipant, postWebRtcSignalMessage)
+router.get('/chat/:appointmentId/webrtc/signals', authConsultParticipant, getWebRtcSignals)
 
 router.post('/legacy', authUser, bookAppointment)
 router.get('/', authUser, listAppointment)
