@@ -8,8 +8,55 @@ import {
   extractVideoUrlFromMessage,
 } from './videoMeeting.js'
 
-const DEFAULT_SLOT_MINUTES = 30
-const EARLY_JOIN_MINUTES = 5
+const DEFAULT_SLOT_MINUTES = 60
+const EARLY_JOIN_MINUTES = 10
+const POST_SLOT_GRACE_MINUTES = 15
+
+function normalizeSlotDuration(raw) {
+  const n = parseInt(raw, 10)
+  if (Number.isFinite(n) && n >= 15 && n <= 180) return n
+  return DEFAULT_SLOT_MINUTES
+}
+
+/** Consultation length from appointment snapshot or doctor schedule (default 1 hour). */
+export function resolveAppointmentSlotDuration(appointment) {
+  if (appointment?.slot_duration_minutes != null) {
+    return normalizeSlotDuration(appointment.slot_duration_minutes)
+  }
+  const doc = appointment?.doc_data
+  if (doc && doc.slot_duration_minutes != null) {
+    return normalizeSlotDuration(doc.slot_duration_minutes)
+  }
+  return DEFAULT_SLOT_MINUTES
+}
+
+async function resolveAppointmentSlotDurationAsync(appointment) {
+  const fromRow = resolveAppointmentSlotDuration(appointment)
+  if (appointment?.slot_duration_minutes != null) return fromRow
+  if (appointment?.doc_data?.slot_duration_minutes != null) return fromRow
+
+  const docId = appointment?.doc_id || appointment?.doctor_id
+  if (!docId) return DEFAULT_SLOT_MINUTES
+
+  try {
+    const { data } = await supabase
+      .from('doctors')
+      .select('slot_duration_minutes')
+      .eq('id', docId)
+      .maybeSingle()
+    if (data?.slot_duration_minutes != null) {
+      return normalizeSlotDuration(data.slot_duration_minutes)
+    }
+  } catch {
+    /* fallback */
+  }
+  return DEFAULT_SLOT_MINUTES
+}
+
+export async function getAppointmentChatWindowForRow(appointment) {
+  const durationMin = await resolveAppointmentSlotDurationAsync(appointment)
+  return getAppointmentChatWindow(appointment, durationMin)
+}
 
 function isMissingColumn(err) {
   const msg = err?.message || ''
@@ -58,17 +105,21 @@ export function getAppointmentChatWindow(appointment, durationMin = DEFAULT_SLOT
   if (!start) {
     return { open: false, reason: 'Appointment time is not set on this booking' }
   }
+  const duration = normalizeSlotDuration(durationMin)
   const windowStart = new Date(start.getTime() - EARLY_JOIN_MINUTES * 60 * 1000)
-  const windowEnd = new Date(start.getTime() + durationMin * 60 * 1000)
+  const windowEnd = new Date(
+    start.getTime() + duration * 60 * 1000 + POST_SLOT_GRACE_MINUTES * 60 * 1000
+  )
   const now = new Date()
 
   if (now < windowStart) {
     return {
       open: false,
-      reason: `Chat opens ${windowStart.toLocaleString()} (5 min before your slot)`,
+      reason: `Chat opens ${windowStart.toLocaleString()} (${EARLY_JOIN_MINUTES} min before your slot)`,
       windowStart: windowStart.toISOString(),
       windowEnd: windowEnd.toISOString(),
       slotStart: start.toISOString(),
+      slotDurationMinutes: duration,
     }
   }
   if (now > windowEnd) {
@@ -78,6 +129,7 @@ export function getAppointmentChatWindow(appointment, durationMin = DEFAULT_SLOT
       windowStart: windowStart.toISOString(),
       windowEnd: windowEnd.toISOString(),
       slotStart: start.toISOString(),
+      slotDurationMinutes: duration,
     }
   }
   return {
@@ -86,6 +138,7 @@ export function getAppointmentChatWindow(appointment, durationMin = DEFAULT_SLOT
     windowStart: windowStart.toISOString(),
     windowEnd: windowEnd.toISOString(),
     slotStart: start.toISOString(),
+    slotDurationMinutes: duration,
   }
 }
 
@@ -145,7 +198,7 @@ export async function resolveChatParticipant(appointmentId, { userId, role }) {
 export async function getChatSessionForUser(appointmentId, context) {
   const { appointment, role } = await resolveChatParticipant(appointmentId, context)
   const eligible = isConsultEligible(appointment)
-  const window = getAppointmentChatWindow(appointment)
+  const window = await getAppointmentChatWindowForRow(appointment)
 
   const peerName =
     role === 'patient'
@@ -219,7 +272,7 @@ export async function sendMessage(appointmentId, context, body) {
   if (!isConsultEligible(appointment)) {
     throw new Error('Chat is only available for confirmed appointments')
   }
-  const window = getAppointmentChatWindow(appointment)
+  const window = await getAppointmentChatWindowForRow(appointment)
   if (!window.open) {
     throw new Error(window.reason || 'Chat is not open yet')
   }
@@ -296,7 +349,7 @@ export async function getOrCreateVideoRoom(appointmentId, context) {
   if (!isConsultEligible(appointment)) {
     throw new Error('Video is only for confirmed appointments')
   }
-  const window = getAppointmentChatWindow(appointment)
+  const window = await getAppointmentChatWindowForRow(appointment)
   if (!window.open) {
     throw new Error(window.reason || 'Video opens during your appointment slot only')
   }

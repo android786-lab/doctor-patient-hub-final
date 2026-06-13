@@ -249,6 +249,16 @@ export default function AppointmentChatPanel({
   }, [session?.canSendChat, session?.chatOpen, loadMessages, setupError])
 
   useEffect(() => {
+    if (setupError || !session) return undefined
+    const live = session.canSendChat ?? session.chatOpen
+    if (live) return undefined
+    const id = setInterval(() => {
+      loadSession().catch(() => {})
+    }, 15000)
+    return () => clearInterval(id)
+  }, [session, setupError, loadSession])
+
+  useEffect(() => {
     const last = messages[messages.length - 1]
     if (!last?.id || last.id === lastMessageIdRef.current) return
     lastMessageIdRef.current = last.id
@@ -406,6 +416,16 @@ export default function AppointmentChatPanel({
           <p className="mt-1 text-xs text-teal-100">
             {session?.slotLabel ? `Slot: ${formatSlotLabel(session.slotLabel)}` : null}
             {session?.status ? ` · ${session.status}` : null}
+            {session?.window?.open && session?.window?.windowEnd ? (
+              <>
+                {' '}
+                · open until{' '}
+                {new Date(session.window.windowEnd).toLocaleTimeString([], {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
+              </>
+            ) : null}
           </p>
         </div>
 
