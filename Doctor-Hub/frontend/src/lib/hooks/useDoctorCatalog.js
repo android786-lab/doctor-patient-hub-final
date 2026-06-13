@@ -6,12 +6,35 @@ const DEFAULT_CATALOG = {
   diseases: [],
 }
 
-export function useDoctorCatalog({ apiBase, token, adminCatalog = false }) {
-  const [catalog, setCatalog] = useState(DEFAULT_CATALOG)
-  const [loading, setLoading] = useState(true)
+const CACHE_TTL_MS = 5 * 60 * 1000
+let catalogCache = { apiBase: null, catalog: null, fetchedAt: 0 }
 
-  const fetchCatalog = useCallback(async () => {
+export function useDoctorCatalog({ apiBase, token, adminCatalog = false }) {
+  const [catalog, setCatalog] = useState(() => {
+    if (catalogCache.apiBase === apiBase && catalogCache.catalog && Date.now() - catalogCache.fetchedAt < CACHE_TTL_MS) {
+      return catalogCache.catalog
+    }
+    return DEFAULT_CATALOG
+  })
+  const [loading, setLoading] = useState(() => {
+    if (catalogCache.apiBase === apiBase && catalogCache.catalog && Date.now() - catalogCache.fetchedAt < CACHE_TTL_MS) {
+      return false
+    }
+    return true
+  })
+
+  const fetchCatalog = useCallback(async (force = false) => {
     if (!apiBase) {
+      setLoading(false)
+      return
+    }
+    if (
+      !force &&
+      catalogCache.apiBase === apiBase &&
+      catalogCache.catalog &&
+      Date.now() - catalogCache.fetchedAt < CACHE_TTL_MS
+    ) {
+      setCatalog(catalogCache.catalog)
       setLoading(false)
       return
     }
@@ -20,7 +43,10 @@ export function useDoctorCatalog({ apiBase, token, adminCatalog = false }) {
       const url = `${apiBase.replace(/\/$/, '')}/doctors/catalog`
       const res = await fetch(url)
       const data = await res.json()
-      if (data?.catalog) setCatalog(data.catalog)
+      if (data?.catalog) {
+        catalogCache = { apiBase, catalog: data.catalog, fetchedAt: Date.now() }
+        setCatalog(data.catalog)
+      }
     } catch {
       /* keep defaults */
     } finally {
@@ -34,7 +60,7 @@ export function useDoctorCatalog({ apiBase, token, adminCatalog = false }) {
 
   const addCatalogEntry = useCallback(
     async (type, value, label) => {
-      if (!adminCatalog || !apiBase || !token) return fetchCatalog()
+      if (!adminCatalog || !apiBase || !token) return fetchCatalog(true)
       const base = apiBase.replace(/\/$/, '')
       const res = await fetch(`${base}/admin/catalog`, {
         method: 'POST',
@@ -47,7 +73,10 @@ export function useDoctorCatalog({ apiBase, token, adminCatalog = false }) {
         body: JSON.stringify({ type, value, label }),
       })
       const data = await res.json()
-      if (data?.catalog) setCatalog(data.catalog)
+      if (data?.catalog) {
+        catalogCache = { apiBase, catalog: data.catalog, fetchedAt: Date.now() }
+        setCatalog(data.catalog)
+      }
       return data
     },
     [adminCatalog, apiBase, token, fetchCatalog]
@@ -56,7 +85,7 @@ export function useDoctorCatalog({ apiBase, token, adminCatalog = false }) {
   return {
     catalog,
     loading,
-    refreshCatalog: fetchCatalog,
+    refreshCatalog: () => fetchCatalog(true),
     addSpeciality: (v) => addCatalogEntry('speciality', v),
     addTreatmentType: (v, label) => addCatalogEntry('treatment_type', v, label),
     addDisease: (v) => addCatalogEntry('disease', v),

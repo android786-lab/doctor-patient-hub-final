@@ -250,7 +250,12 @@ export default function AppointmentChatPanel({
   useEffect(() => {
     const canSend = session?.canSendChat ?? session?.chatOpen
     if (!canSend || setupError) return undefined
-    const id = setInterval(loadMessages, 3000)
+    const tick = () => {
+      if (typeof document !== 'undefined' && document.hidden) return
+      loadMessages()
+    }
+    tick()
+    const id = setInterval(tick, 4000)
     return () => clearInterval(id)
   }, [session?.canSendChat, session?.chatOpen, loadMessages, setupError])
 
@@ -258,9 +263,11 @@ export default function AppointmentChatPanel({
     if (setupError || !session) return undefined
     const live = session.canSendChat ?? session.chatOpen
     if (live) return undefined
-    const id = setInterval(() => {
+    const tick = () => {
+      if (typeof document !== 'undefined' && document.hidden) return
       loadSession().catch(() => {})
-    }, 15000)
+    }
+    const id = setInterval(tick, 15000)
     return () => clearInterval(id)
   }, [session, setupError, loadSession])
 

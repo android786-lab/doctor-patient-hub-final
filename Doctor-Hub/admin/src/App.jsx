@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from 'react'
+import { useContext, useEffect, useState, lazy, Suspense } from 'react'
 import { decodeJwtPayload } from './utils/jwt.js'
 import { roleFromToken } from './utils/staffRole.js'
 import { DoctorContext } from './context/DoctorContext'
@@ -10,37 +10,46 @@ import 'react-toastify/dist/ReactToastify.css'
 import Navbar from './components/Navbar'
 import Sidebar from './components/Sidebar'
 import ProtectedRoute from './components/ProtectedRoute'
-import AdminAnalyticsDashboard from './pages/Admin/AdminAnalyticsDashboard'
-import AdminDoctors from './pages/Admin/AdminDoctors'
-import AdminPatients from './pages/Admin/AdminPatients'
-import AdminAppointments from './pages/Admin/AdminAppointments'
-import AdminPayments from './pages/Admin/AdminPayments'
-import SuperAdminDashboard from './pages/superadmin/SuperAdminDashboard'
-import SuperAdminAdmins from './pages/superadmin/SuperAdminAdmins'
-import SuperAdminUsers from './pages/superadmin/SuperAdminUsers'
-import RegisterAdmin from './pages/RegisterAdmin'
-import AddDoctor from './pages/Admin/AddDoctor'
-import AddAssistant from './pages/Admin/AddAssistant'
-import VerifyPayments from './pages/Admin/VerifyPayments'
-import AssistantHome from './pages/assistant/AssistantHome'
-import PendingPayments from './pages/assistant/PendingPayments'
-import AssistantAppointments from './pages/assistant/AssistantAppointments'
-import AssistantBookings from './pages/assistant/AssistantBookings'
 import Login from './pages/Login'
 import Unauthorized from './pages/Unauthorized'
 import NotFound from './pages/NotFound.jsx'
-import AddRecord from './pages/Doctor/AddRecord'
-import DoctorDashboard from './pages/Doctor/DoctorDashboard'
-import DoctorProfile from './pages/Doctor/DoctorProfile'
-import DoctorAppointmentsList from './pages/Doctor/DoctorAppointmentsList'
-import DoctorPatients from './pages/Doctor/DoctorPatients'
-import PatientHistory from './pages/Doctor/PatientHistory.jsx'
-import DoctorClinics from './pages/Doctor/Clinics'
-import DoctorSchedule from './pages/Doctor/Schedule'
-import DoctorAppointmentChat from './pages/Doctor/AppointmentChat.jsx'
-import DoctorMessages from './pages/Doctor/Messages.jsx'
-import DoctorAssistants from './pages/Doctor/Assistants.jsx'
-import AssistantMessages from './pages/assistant/AssistantMessages.jsx'
+
+const AdminAnalyticsDashboard = lazy(() => import('./pages/Admin/AdminAnalyticsDashboard'))
+const AdminDoctors = lazy(() => import('./pages/Admin/AdminDoctors'))
+const AdminPatients = lazy(() => import('./pages/Admin/AdminPatients'))
+const AdminAppointments = lazy(() => import('./pages/Admin/AdminAppointments'))
+const AdminPayments = lazy(() => import('./pages/Admin/AdminPayments'))
+const SuperAdminDashboard = lazy(() => import('./pages/superadmin/SuperAdminDashboard'))
+const SuperAdminAdmins = lazy(() => import('./pages/superadmin/SuperAdminAdmins'))
+const SuperAdminUsers = lazy(() => import('./pages/superadmin/SuperAdminUsers'))
+const RegisterAdmin = lazy(() => import('./pages/RegisterAdmin'))
+const AddDoctor = lazy(() => import('./pages/Admin/AddDoctor'))
+const AddAssistant = lazy(() => import('./pages/Admin/AddAssistant'))
+const VerifyPayments = lazy(() => import('./pages/Admin/VerifyPayments'))
+const AssistantHome = lazy(() => import('./pages/assistant/AssistantHome'))
+const PendingPayments = lazy(() => import('./pages/assistant/PendingPayments'))
+const AssistantAppointments = lazy(() => import('./pages/assistant/AssistantAppointments'))
+const AssistantBookings = lazy(() => import('./pages/assistant/AssistantBookings'))
+const AddRecord = lazy(() => import('./pages/Doctor/AddRecord'))
+const DoctorDashboard = lazy(() => import('./pages/Doctor/DoctorDashboard'))
+const DoctorProfile = lazy(() => import('./pages/Doctor/DoctorProfile'))
+const DoctorAppointmentsList = lazy(() => import('./pages/Doctor/DoctorAppointmentsList'))
+const DoctorPatients = lazy(() => import('./pages/Doctor/DoctorPatients'))
+const PatientHistory = lazy(() => import('./pages/Doctor/PatientHistory.jsx'))
+const DoctorClinics = lazy(() => import('./pages/Doctor/Clinics'))
+const DoctorSchedule = lazy(() => import('./pages/Doctor/Schedule'))
+const DoctorAppointmentChat = lazy(() => import('./pages/Doctor/AppointmentChat.jsx'))
+const DoctorMessages = lazy(() => import('./pages/Doctor/Messages.jsx'))
+const DoctorAssistants = lazy(() => import('./pages/Doctor/Assistants.jsx'))
+const AssistantMessages = lazy(() => import('./pages/assistant/AssistantMessages.jsx'))
+
+function StaffPageLoader() {
+  return (
+    <div className="flex min-h-[40vh] items-center justify-center p-8">
+      <div className="h-10 w-10 animate-spin rounded-full border-2 border-teal-600 border-t-transparent" />
+    </div>
+  )
+}
 
 function StaffShell({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -71,7 +80,7 @@ function StaffShell({ children }) {
       <div className="flex">
         <Sidebar mobileOpen={sidebarOpen} onMobileClose={() => setSidebarOpen(false)} />
         <main className="min-h-[calc(100vh-4rem)] min-w-0 w-full flex-1 overflow-x-hidden overflow-y-auto">
-          {children}
+          <Suspense fallback={<StaffPageLoader />}>{children}</Suspense>
         </main>
       </div>
     </div>
@@ -395,12 +404,14 @@ export default function App() {
   return (
     <>
       <ToastContainer />
+      <Suspense fallback={<StaffPageLoader />}>
       <Routes>
         <Route path="/register-admin" element={<RegisterAdmin />} />
         <Route path="/" element={<Login />} />
         <Route path="/unauthorized" element={<Unauthorized />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
+      </Suspense>
     </>
   )
 }

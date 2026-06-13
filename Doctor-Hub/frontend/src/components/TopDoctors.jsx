@@ -1,11 +1,16 @@
-import { useContext } from 'react'
+import { useContext, useEffect, memo } from 'react'
 import { Link } from 'react-router-dom'
 import { AppContext } from '../context/AppContext'
 import DoctorCard from './doctors/DoctorCard'
 import { DOCTOR_CARD_GRID_CLASS } from './doctors/doctorCardGrid.js'
 
-export default function TopDoctors() {
-  const { doctors } = useContext(AppContext)
+function TopDoctors() {
+  const { doctors, getDoctorsData } = useContext(AppContext)
+
+  useEffect(() => {
+    if (!doctors.length && getDoctorsData) getDoctorsData()
+  }, [doctors.length, getDoctorsData])
+
   const top = doctors.filter((d) => d.available).slice(0, 6)
 
   if (!top.length) {
@@ -35,3 +40,5 @@ export default function TopDoctors() {
     </div>
   )
 }
+
+export default memo(TopDoctors)

@@ -6,6 +6,7 @@ import {
   isMissingMessagesTable,
   CHAT_SETUP_ERROR,
 } from './appointmentChatRows.js'
+import { isWebRtcSignalBody } from './webrtcSignalRows.js'
 
 function isMissingReadsTable(err) {
   const msg = err?.message || ''
@@ -59,7 +60,21 @@ function slotLabel(appointment) {
   if (appointment.slot_date) {
     return `${appointment.slot_date} ${appointment.slot_time || ''}`.trim()
   }
-  return appointment.scheduled_at || ''
+  if (appointment.scheduled_at) {
+    const d = new Date(appointment.scheduled_at)
+    if (!Number.isNaN(d.getTime())) {
+      return d.toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })
+    }
+  }
+  return ''
+}
+
+function previewText(body) {
+  if (!body || isWebRtcSignalBody(body)) return ''
+  if (body.includes('🎥 VIDEO_CALL')) {
+    return 'Video consultation started — tap to join'
+  }
+  return String(body).slice(0, 160)
 }
 
 async function fetchEligibleAppointments(userId, role) {
@@ -126,6 +141,8 @@ async function buildChatConversationData(userId, role) {
   for (const m of messages || []) {
     const bucket = byAppt[m.appointment_id]
     if (!bucket) continue
+    if (isWebRtcSignalBody(m.body)) continue
+
     if (!bucket.latest) bucket.latest = m
     if (m.sender_role === myRole) continue
     const lastReadRaw = readMap[m.appointment_id]
@@ -144,7 +161,7 @@ async function buildChatConversationData(userId, role) {
       peerName: peerNameForAppointment(appt, myRole),
       slotLabel: slotLabel(appt),
       unreadCount: bucket.unread,
-      preview: (bucket.latest?.body || '').slice(0, 160),
+      preview: previewText(bucket.latest?.body),
       lastMessageAt: bucket.latest?.created_at || null,
       status: appt.status || null,
     })

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import axios from 'axios'
 
@@ -31,10 +31,12 @@ export default function MessagesInbox({
   const [totalUnread, setTotalUnread] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const firstLoadRef = useRef(true)
 
   const load = useCallback(async () => {
     if (!backendUrl) return
-    setLoading(true)
+    if (typeof document !== 'undefined' && document.hidden) return
+    if (firstLoadRef.current) setLoading(true)
     setError('')
     try {
       const { data } = await axios.get(`${backendUrl}/api/appointments/chat/inbox`, {
@@ -50,6 +52,7 @@ export default function MessagesInbox({
       setError(e.response?.data?.message || e.message || 'Could not load messages')
       setConversations([])
     } finally {
+      firstLoadRef.current = false
       setLoading(false)
     }
   }, [backendUrl, authHeaders])
@@ -57,7 +60,14 @@ export default function MessagesInbox({
   useEffect(() => {
     load()
     const id = setInterval(load, 15000)
-    return () => clearInterval(id)
+    const onVisible = () => {
+      if (!document.hidden) load()
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => {
+      clearInterval(id)
+      document.removeEventListener('visibilitychange', onVisible)
+    }
   }, [load])
 
   return (

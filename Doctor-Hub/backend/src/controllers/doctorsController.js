@@ -1,5 +1,6 @@
 import {
   fetchDoctorRows,
+  fetchDoctorRowById,
   loadProfiles,
   mapDoctorSummary,
   mapLegacyDoctorCard,
@@ -88,8 +89,7 @@ export async function getDoctorByIdPublic(req, res, next) {
 
   try {
     const { id } = req.params
-    const rows = await fetchDoctorRows()
-    const row = rows.find((r) => r.id === id)
+    const row = await fetchDoctorRowById(id)
 
     if (!row || !isDoctorVisible(row)) {
       return res.status(404).json({ message: 'Doctor not found' })
@@ -147,7 +147,12 @@ export async function listDoctorsLegacy(req, res) {
     const { treatment, disease, speciality } = req.query
 
     let rows = await fetchDoctorRows()
-    rows = await attachSchedulesFromTable(rows)
+    const needsScheduleTable = rows.some(
+      (r) => !r.weekly_schedule || !Object.keys(r.weekly_schedule || {}).length
+    )
+    if (needsScheduleTable) {
+      rows = await attachSchedulesFromTable(rows)
+    }
     rows = rows.filter((row) => isDoctorVisible(row))
     const profileIds = [...new Set(rows.map((r) => r.user_id).filter(Boolean))]
     const profiles = await loadProfiles(profileIds)
@@ -168,7 +173,7 @@ export async function listDoctorsLegacy(req, res) {
       rows = rows.filter((r) => (r.diseases || []).some((x) => String(x).toLowerCase().includes(d)))
     }
 
-    const doctors = rows.map((row) => mapLegacyDoctorCard(row, profiles[row.user_id]))
+    const doctors = rows.map((row) => mapLegacyDoctorCard(row, profiles[row.user_id], { forList: true }))
     return res.json({ success: true, doctors })
   } catch (err) {
     console.error('listDoctorsLegacy:', err)

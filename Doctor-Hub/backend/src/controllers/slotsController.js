@@ -1,4 +1,4 @@
-import { fetchDoctorRows, isDoctorVisible } from '../utils/doctorRows.js'
+import { fetchDoctorRowById, isDoctorVisible } from '../utils/doctorRows.js'
 import { fetchDateSchedules } from '../utils/doctorScheduleDateRows.js'
 import { buildAvailabilityWindow } from '../utils/slotAvailability.js'
 
@@ -12,8 +12,8 @@ export async function getDoctorAvailableSlots(req, res) {
 
   try {
     const days = Math.min(30, Math.max(1, parseInt(req.query.days, 10) || 14))
-    const rows = await fetchDoctorRows()
-    const row = rows.find((r) => r.id === req.params.id)
+    const rows = await fetchDoctorRowById(req.params.id)
+    const row = rows
 
     if (!row || !isDoctorVisible(row)) {
       return res.status(404).json({ success: false, message: 'Doctor not found' })

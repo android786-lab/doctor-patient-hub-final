@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
@@ -5,36 +6,45 @@ import 'react-toastify/dist/ReactToastify.css'
 import Navbar from './components/shared/Navbar.jsx'
 import Footer from './components/Footer'
 import ProtectedRoute from './components/shared/ProtectedRoute.jsx'
+import Loader from './components/shared/Loader.jsx'
+import { ROLES } from './utils/constants.js'
 
 import Login from './pages/auth/Login.jsx'
 import Register from './pages/auth/Register.jsx'
 import ForgotPassword from './pages/auth/ForgotPassword.jsx'
 import ResetPassword from './pages/auth/ResetPassword.jsx'
+import Home from './pages/Home'
+import Unauthorized from './pages/Unauthorized'
+import NotFound from './pages/NotFound.jsx'
 
-import PatientDashboard from './pages/patient/Dashboard.jsx'
-import FindDoctors from './pages/patient/FindDoctors.jsx'
-import DoctorProfile from './pages/patient/DoctorProfile.jsx'
-import BookAppointment from './pages/patient/BookAppointment.jsx'
-import MyAppointments from './pages/patient/MyAppointments.jsx'
-import PatientAppointmentChat from './pages/patient/AppointmentChat.jsx'
-import MedicalHistory from './pages/patient/MedicalHistory.jsx'
-import PatientMessages from './pages/patient/Messages.jsx'
-import Profile from './pages/patient/Profile.jsx'
-import Prescriptions from './pages/patient/Prescriptions.jsx'
+const PatientDashboard = lazy(() => import('./pages/patient/Dashboard.jsx'))
+const FindDoctors = lazy(() => import('./pages/patient/FindDoctors.jsx'))
+const DoctorProfile = lazy(() => import('./pages/patient/DoctorProfile.jsx'))
+const BookAppointment = lazy(() => import('./pages/patient/BookAppointment.jsx'))
+const MyAppointments = lazy(() => import('./pages/patient/MyAppointments.jsx'))
+const PatientAppointmentChat = lazy(() => import('./pages/patient/AppointmentChat.jsx'))
+const MedicalHistory = lazy(() => import('./pages/patient/MedicalHistory.jsx'))
+const PatientMessages = lazy(() => import('./pages/patient/Messages.jsx'))
+const Profile = lazy(() => import('./pages/patient/Profile.jsx'))
+const Prescriptions = lazy(() => import('./pages/patient/Prescriptions.jsx'))
+const Doctors = lazy(() => import('./pages/Doctors'))
+const Appointment = lazy(() => import('./Appointment'))
+const About = lazy(() => import('./pages/About'))
+const Contact = lazy(() => import('./pages/Contact'))
+const PaymentSuccess = lazy(() => import('./pages/PaymentSuccess'))
+const AiSymptom = lazy(() => import('./pages/AiSymptom'))
+const Consultation = lazy(() => import('./pages/Consultation'))
+
 import PatientSidebar from './components/patient/PatientSidebar.jsx'
 import PatientMobileNav from './components/patient/PatientMobileNav.jsx'
 
-import Home from './pages/Home'
-import Doctors from './pages/Doctors'
-import Appointment from './Appointment'
-import About from './pages/About'
-import Contact from './pages/Contact'
-import PaymentSuccess from './pages/PaymentSuccess'
-import AiSymptom from './pages/AiSymptom'
-import Consultation from './pages/Consultation'
-import Unauthorized from './pages/Unauthorized'
-import NotFound from './pages/NotFound.jsx'
-import { ROLES } from './utils/constants.js'
+function PageLoader() {
+  return (
+    <div className="flex min-h-[40vh] items-center justify-center">
+      <Loader />
+    </div>
+  )
+}
 
 function AuthLayout({ children }) {
   return (
@@ -78,6 +88,7 @@ export default function App() {
   return (
     <div className="min-h-screen">
       <ToastContainer />
+      <Suspense fallback={<PageLoader />}>
       <Routes>
         {/* Module 1 — auth */}
         <Route path="/auth/login" element={<AuthLayout><Login /></AuthLayout>} />
@@ -298,6 +309,7 @@ export default function App() {
 
         <Route path="*" element={<NotFound />} />
       </Routes>
+      </Suspense>
     </div>
   )
 }

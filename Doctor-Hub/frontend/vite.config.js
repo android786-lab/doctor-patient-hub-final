@@ -16,4 +16,14 @@ export default defineConfig({
     dedupe: ['react', 'react-dom', 'react-router-dom'],
   },
   server: { port: 5173, strictPort: true },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          toast: ['react-toastify'],
+        },
+      },
+    },
+  },
 })

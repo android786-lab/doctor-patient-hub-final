@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import DoctorPhoto from '@doctor-hub/ui/DoctorPhoto.jsx'
 import { formatMoney } from '@doctor-hub/constants/currency.js'
@@ -54,7 +55,7 @@ export function normalizeDoctorForCard(raw) {
   }
 }
 
-export default function DoctorCard({ doctor: rawDoctor, patientPortal = false }) {
+function DoctorCard({ doctor: rawDoctor, patientPortal = false }) {
   const navigate = useNavigate()
   const doctor = normalizeDoctorForCard(rawDoctor)
   const loc = locationLabel(doctor.address, rawDoctor.clinics)
@@ -161,3 +162,5 @@ export default function DoctorCard({ doctor: rawDoctor, patientPortal = false })
     </article>
   )
 }
+
+export default memo(DoctorCard)

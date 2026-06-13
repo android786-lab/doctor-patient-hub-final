@@ -106,6 +106,33 @@ export async function fetchDoctorRows() {
   return attachClinics(rows)
 }
 
+const DOCTOR_BY_ID_SELECTS = [
+  `${DOCTOR_SELECT}, slots_booked, address, phone, degree`,
+  `${DOCTOR_SELECT}, slots_booked`,
+  ...DOCTOR_SELECT_FALLBACKS,
+]
+
+/** Single doctor — avoids loading entire doctors table (booking, slots API). */
+export async function fetchDoctorRowById(id) {
+  let row = null
+  let lastError = null
+  for (const columns of DOCTOR_BY_ID_SELECTS) {
+    const { data, error } = await supabase.from('doctors').select(columns).eq('id', id).maybeSingle()
+    if (!error) {
+      row = data
+      break
+    }
+    lastError = error
+    if (!isMissingColumn(error)) throw error
+  }
+  if (lastError && row === null && !lastError.message?.includes('0 rows')) {
+    throw lastError
+  }
+  if (!row) return null
+  const [withClinics] = await attachClinics([row])
+  return withClinics
+}
+
 /** True when doctor accepts new bookings (module `is_active` + CareLink `available`). */
 export function doctorAcceptsAppointments(row) {
   if (!row) return false
@@ -121,32 +148,37 @@ export function displayName(row, profile) {
 const DEFAULT_IMAGE =
   'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPAAAADwCAYAAAA+VemSAAAACXBIWXMAABCcAAAQnAEmzTo0AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAADASURBVHgB7cExAQAAAMKg9U9tCy+gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAeAMBuAABHgAAAABJRU5ErkJggg=='
 
-export function displayImage(row, profile) {
-  return row.profile_image || profile?.avatar_url || DEFAULT_IMAGE
+export function displayImage(row, profile, { placeholder = true } = {}) {
+  const url = row.profile_image || profile?.avatar_url
+  if (url) return url
+  return placeholder ? DEFAULT_IMAGE : null
 }
 
 /** Shape expected by CareLink-style frontend cards & admin list */
-export function mapLegacyDoctorCard(row, profile) {
+export function mapLegacyDoctorCard(row, profile, { forList = false } = {}) {
   const years = row.experience_years ?? 0
-  return {
+  const card = {
     id: row.id,
     name: displayName(row, profile),
-    image: displayImage(row, profile),
+    image: displayImage(row, profile, { placeholder: !forList }),
     speciality: row.specialization || 'General physician',
     degree: row.degree || 'MBBS',
     experience: years ? `${years} Year${years === 1 ? '' : 's'}` : '—',
     about: row.bio || '',
     available: doctorAcceptsAppointments(row),
     fees: Number(row.consultation_fee ?? row.fees ?? 0),
-    slots_booked: row.slots_booked || {},
     address: row.address || { line1: '', line2: '' },
     date: row.date || Date.now(),
     treatment_type: row.treatment_type || 'allopathic',
     diseases: row.diseases || [],
     is_verified: row.is_verified ?? false,
-    weekly_schedule: extractScheduleFromDoctorRow(row),
-    slot_duration_minutes: extractSlotDurationFromRow(row),
   }
+  if (!forList) {
+    card.slots_booked = row.slots_booked || {}
+    card.weekly_schedule = extractScheduleFromDoctorRow(row)
+    card.slot_duration_minutes = extractSlotDurationFromRow(row)
+  }
+  return card
 }
 
 export function mapDoctorSummary(row, profile) {

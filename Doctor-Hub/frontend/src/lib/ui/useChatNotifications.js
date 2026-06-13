@@ -33,12 +33,16 @@ export default function useChatNotifications({
   const [loading, setLoading] = useState(false)
   const seenKeysRef = useRef(new Set())
   const initializedRef = useRef(false)
+  const firstLoadRef = useRef(true)
 
   const onChatPage = /\/appointments\/[^/]+\/chat/.test(location.pathname)
 
   const fetchUnread = useCallback(async () => {
     if (!enabled || !backendUrl || onChatPage) return
-    setLoading(true)
+    if (typeof document !== 'undefined' && document.hidden) return
+    if (firstLoadRef.current) {
+      setLoading(true)
+    }
     try {
       const { data } = await axios.get(`${backendUrl}/api/appointments/chat/unread`, {
         headers: authHeaders(),
@@ -89,6 +93,7 @@ export default function useChatNotifications({
     } catch {
       /* optional — chat tables may be missing */
     } finally {
+      firstLoadRef.current = false
       setLoading(false)
     }
   }, [enabled, backendUrl, authHeaders, role, location.pathname, navigate, onChatPage])
@@ -99,12 +104,23 @@ export default function useChatNotifications({
       setNotifications([])
       initializedRef.current = false
       seenKeysRef.current = new Set()
+      firstLoadRef.current = true
       return undefined
     }
     if (onChatPage) return undefined
+
     fetchUnread()
     const id = setInterval(fetchUnread, POLL_MS)
-    return () => clearInterval(id)
+
+    const onVisible = () => {
+      if (!document.hidden) fetchUnread()
+    }
+    document.addEventListener('visibilitychange', onVisible)
+
+    return () => {
+      clearInterval(id)
+      document.removeEventListener('visibilitychange', onVisible)
+    }
   }, [enabled, fetchUnread, onChatPage])
 
   const markRead = useCallback(

@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { toast } from 'react-toastify'
 import api from '../services/api.js'
 import { API_BASE_URL, LANDING_PATH, ROLES } from '../utils/constants.js'
@@ -62,7 +62,7 @@ export function AuthProvider({ children }) {
     setIsLoading(false)
   }, [])
 
-  const getDoctorsData = async () => {
+  const getDoctorsData = useCallback(async () => {
     try {
       const { data } = await api.get('/doctor/list')
       if (data.success) setDoctors(data.doctors)
@@ -72,9 +72,9 @@ export function AuthProvider({ children }) {
         toast.error(friendlyUserMessage(error.message))
       }
     }
-  }
+  }, [])
 
-  const loadUserProfileData = async () => {
+  const loadUserProfileData = useCallback(async () => {
     if (!token) return
     try {
       const { data: me } = await api.get('/auth/me')
@@ -114,15 +114,11 @@ export function AuthProvider({ children }) {
     } catch (error) {
       if (error.isAuthError) clearSession()
     }
-  }
-
-  useEffect(() => {
-    getDoctorsData()
-  }, [])
+  }, [token, clearSession])
 
   useEffect(() => {
     if (token) loadUserProfileData()
-  }, [token])
+  }, [token, loadUserProfileData])
 
   const login = async (email, password) => {
     const { data } = await api.post('/auth/login', { email, password })
@@ -151,26 +147,40 @@ export function AuthProvider({ children }) {
     window.location.replace(LANDING_PATH)
   }
 
-  const value = {
-    user,
-    setUser,
-    userData: user,
-    setUserData: setUser,
-    token,
-    setToken,
-    isLoading,
-    login,
-    register,
-    logout,
-    clearSession,
-    doctors,
-    getDoctorsData,
-    loadUserProfileData,
-    currencySymbol,
-    formatMoney,
-    backendUrl,
-    role: user?.role || null,
-  }
+  const value = useMemo(
+    () => ({
+      user,
+      setUser,
+      userData: user,
+      setUserData: setUser,
+      token,
+      setToken,
+      isLoading,
+      login,
+      register,
+      logout,
+      clearSession,
+      doctors,
+      getDoctorsData,
+      loadUserProfileData,
+      currencySymbol,
+      formatMoney,
+      backendUrl,
+      role: user?.role || null,
+    }),
+    [
+      user,
+      token,
+      isLoading,
+      doctors,
+      getDoctorsData,
+      loadUserProfileData,
+      currencySymbol,
+      backendUrl,
+      setToken,
+      clearSession,
+    ]
+  )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
