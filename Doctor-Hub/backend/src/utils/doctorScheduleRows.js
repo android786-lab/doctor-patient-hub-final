@@ -42,20 +42,12 @@ function fromTimeValue(t) {
   return String(t).slice(0, 5)
 }
 
-export function normalizeWeeklySchedule(input) {
-  const base = { ...DEFAULT_WEEKLY_SCHEDULE }
-  if (!input || typeof input !== 'object') return base
+import {
+  normalizeWeeklyScheduleWithSlots,
+} from './slotAvailability.js'
 
-  for (const key of DAY_KEYS) {
-    const day = input[key]
-    if (!day || typeof day !== 'object') continue
-    base[key] = {
-      enabled: day.enabled !== false,
-      start: String(day.start || base[key].start).slice(0, 5),
-      end: String(day.end || base[key].end).slice(0, 5),
-    }
-  }
-  return base
+export function normalizeWeeklySchedule(input) {
+  return normalizeWeeklyScheduleWithSlots(input || DEFAULT_WEEKLY_SCHEDULE)
 }
 
 export function normalizeSlotDuration(value) {

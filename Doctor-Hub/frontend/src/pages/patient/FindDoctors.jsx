@@ -74,6 +74,13 @@ export default function FindDoctors() {
       if (search) params.search = search
       if (treatmentType) params.treatment_type = treatmentType
       if (city.trim()) params.city = city.trim()
+      const searchLower = search.toLowerCase()
+      const allDiseases = [...quickTags, ...(catalog.diseases || [])].map((d) =>
+        String(d).toLowerCase()
+      )
+      if (search && allDiseases.some((d) => d === searchLower || d.includes(searchLower))) {
+        params.disease = search
+      }
 
       const { data } = await api.get('/doctors', { params })
       setDoctors(Array.isArray(data) ? data : [])
@@ -83,7 +90,7 @@ export default function FindDoctors() {
     } finally {
       setLoading(false)
     }
-  }, [search, treatmentType, city])
+  }, [search, treatmentType, city, quickTags, catalog.diseases])
 
   useEffect(() => {
     fetchDoctors()

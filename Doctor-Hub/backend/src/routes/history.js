@@ -46,6 +46,9 @@ const reportUpload = patientReportUpload.array('files', 5)
 
 router.get('/my', authPatient, getMyHistory)
 
+/** Documentation alias — same as GET /my */
+router.get('/', authPatient, getMyHistory)
+
 router.post(
 
   '/my/reports',

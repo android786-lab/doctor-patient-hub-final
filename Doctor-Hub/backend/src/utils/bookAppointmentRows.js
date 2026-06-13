@@ -1,6 +1,8 @@
 import supabase from '../config/supabase.js'
 import { resolvePatientId } from './medicalHistoryRows.js'
 import { insertPatientProfile } from './authUserRows.js'
+import { fetchDateSchedules } from './doctorScheduleDateRows.js'
+import { validateSlotBooking, formatSlotDisplay, normalizeSlotTime24 } from './slotAvailability.js'
 
 function isMissingColumn(err) {
   const msg = err?.message || ''
@@ -243,6 +245,7 @@ export async function bookAppointmentForPatient({
   symptoms,
   diseaseQuery,
   clinicId: preferredClinicId,
+  dateIso,
 }) {
   const { data: docData, error: docErr } = await supabase
     .from('doctors')
@@ -255,10 +258,42 @@ export async function bookAppointmentForPatient({
     return { success: false, message: 'Doctor Not Available' }
   }
 
+  const dateSchedules = await fetchDateSchedules(docId)
+  const iso =
+    dateIso ||
+    (() => {
+      const parts = String(slotDate || '').split('_').map(Number)
+      if (parts.length !== 3) return null
+      const [d, m, y] = parts
+      return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`
+    })()
+
+  if (iso) {
+    const check = await validateSlotBooking(docData, iso, slotTime, dateSchedules)
+    if (!check.ok) {
+      return {
+        success: false,
+        message: check.message,
+        availableSlots: check.availableSlots || [],
+      }
+    }
+    slotDate = check.slotDate
+    slotTime = check.slotTime
+  }
+
   const hasSlotsBooked = Object.prototype.hasOwnProperty.call(docData, 'slots_booked')
   const slots_booked = { ...(docData.slots_booked || {}) }
-  if (hasSlotsBooked && slots_booked[slotDate]?.includes(slotTime)) {
-    return { success: false, message: 'Slot Not Available' }
+  const slotKey24 = normalizeSlotTime24(slotTime)
+  const bookedTimes = (slots_booked[slotDate] || []).map(normalizeSlotTime24)
+  if (hasSlotsBooked && bookedTimes.includes(slotKey24)) {
+    const check = iso
+      ? await validateSlotBooking(docData, iso, slotTime, dateSchedules)
+      : { availableSlots: [] }
+    return {
+      success: false,
+      message: check.message || 'Slot Not Available',
+      availableSlots: check.availableSlots || [],
+    }
   }
 
   const userData = await loadUserDataForBooking(userId)
@@ -318,7 +353,11 @@ export async function bookAppointmentForPatient({
   ])
 
   if (hasSlotsBooked) {
-    slots_booked[slotDate] = [...(slots_booked[slotDate] || []), slotTime]
+    const displayTime = formatSlotDisplay(slotKey24 || slotTime)
+    const existing = (slots_booked[slotDate] || []).map((t) => formatSlotDisplay(t))
+    if (!existing.includes(displayTime)) {
+      slots_booked[slotDate] = [...existing, displayTime]
+    }
     await updateSlotsBooked(docId, slots_booked)
   }
 

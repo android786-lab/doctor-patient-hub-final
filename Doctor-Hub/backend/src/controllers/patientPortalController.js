@@ -88,10 +88,11 @@ export async function bookAppointment(req, res) {
       symptoms,
       diseaseQuery: diseaseQuery || disease || null,
       clinicId,
+      dateIso: req.body.date || null,
     })
 
     if (!result.success) {
-      return res.status(400).json(result)
+      return res.status(409).json(result)
     }
 
     return res.status(201).json({

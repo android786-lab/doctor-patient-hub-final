@@ -26,6 +26,7 @@ import supabase from '../config/supabase.js'
 import { fetchPendingVerificationAppointments } from '../utils/appointmentRows.js'
 import { filterAppointmentsForDoctorRow } from '../utils/assistantRows.js'
 import { appointmentDoctorRef } from '../utils/appointmentDoctorRows.js'
+import { upsertAssistantAssignment } from '../utils/authUserRows.js'
 
 function mapClinicForApi(c) {
   const timings = c.timings || {}
@@ -328,6 +329,100 @@ export async function getDoctorAssistant(req, res) {
     })
   } catch (err) {
     console.error('getDoctorAssistant:', err)
+    return res.status(500).json({ success: false, message: err.message })
+  }
+}
+
+export async function listDoctorAssistantCandidates(req, res) {
+  try {
+    const { doctorRowId } = await resolveDoctorContextIdsOrCreate(req.user.id)
+
+    const { data: users, error } = await supabase
+      .from('users')
+      .select('id, name, email, phone, role, is_active')
+      .eq('role', 'assistant')
+      .limit(100)
+
+    if (error) throw error
+
+    const { data: assigned } = await supabase
+      .from('assistants')
+      .select('user_id, doctor_id')
+
+    const assignedMap = Object.fromEntries((assigned || []).map((a) => [a.user_id, a.doctor_id]))
+
+    const candidates = (users || []).map((u) => ({
+      id: u.id,
+      name: u.name || u.email,
+      email: u.email,
+      phone: u.phone,
+      isActive: u.is_active !== false,
+      assignedToYou: assignedMap[u.id] === doctorRowId,
+      assignedElsewhere: assignedMap[u.id] && assignedMap[u.id] !== doctorRowId,
+    }))
+
+    return res.json({ success: true, candidates })
+  } catch (err) {
+    console.error('listDoctorAssistantCandidates:', err)
+    return res.status(500).json({ success: false, message: err.message })
+  }
+}
+
+export async function assignDoctorAssistant(req, res) {
+  try {
+    const { assistantUserId, email } = req.body
+    if (!assistantUserId && !email) {
+      return res.status(400).json({ success: false, message: 'assistantUserId or email is required' })
+    }
+
+    const { doctorRowId } = await resolveDoctorContextIdsOrCreate(req.user.id)
+
+    let userId = assistantUserId
+    if (!userId && email) {
+      const { data: user } = await supabase
+        .from('users')
+        .select('id, role')
+        .ilike('email', email.trim())
+        .maybeSingle()
+      if (!user?.id) {
+        return res.status(404).json({ success: false, message: 'Assistant account not found' })
+      }
+      if ((user.role || '').toLowerCase() !== 'assistant') {
+        return res.status(400).json({ success: false, message: 'That user is not an assistant' })
+      }
+      userId = user.id
+    }
+
+    await upsertAssistantAssignment(userId, doctorRowId)
+
+    return res.json({ success: true, message: 'Assistant assigned to your practice' })
+  } catch (err) {
+    console.error('assignDoctorAssistant:', err)
+    return res.status(500).json({ success: false, message: err.message })
+  }
+}
+
+export async function removeDoctorAssistant(req, res) {
+  try {
+    const { doctorRowId } = await resolveDoctorContextIdsOrCreate(req.user.id)
+
+    const { data: link, error } = await supabase
+      .from('assistants')
+      .select('id')
+      .eq('doctor_id', doctorRowId)
+      .maybeSingle()
+
+    if (error) throw error
+    if (!link?.id) {
+      return res.json({ success: true, message: 'No assistant was assigned' })
+    }
+
+    const { error: delErr } = await supabase.from('assistants').delete().eq('id', link.id)
+    if (delErr) throw delErr
+
+    return res.json({ success: true, message: 'Assistant removed from your practice' })
+  } catch (err) {
+    console.error('removeDoctorAssistant:', err)
     return res.status(500).json({ success: false, message: err.message })
   }
 }

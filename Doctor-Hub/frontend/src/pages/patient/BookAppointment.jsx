@@ -6,6 +6,11 @@ import { AppContext } from '../../context/AppContext.jsx'
 import api from '../../services/api.js'
 import Loader from '../../components/shared/Loader.jsx'
 import ManualPaymentProofForm from '../../components/patient/ManualPaymentProofForm.jsx'
+import {
+  buildSlotsFromWeekly,
+  calendarFromAvailabilityApi,
+  isoDateOffset,
+} from '../../utils/slotAvailability.js'
 
 const DAYS_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 const DAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat']
@@ -220,7 +225,8 @@ function mapDoctorForBooking(raw) {
     available: raw.available !== false && raw.is_active !== false,
     slots_booked: raw.slots_booked || {},
     weekly_schedule: raw.weekly_schedule || {},
-    slot_duration_minutes: raw.slot_duration_minutes || 30,
+    slot_duration_minutes: raw.slot_duration_minutes || 60,
+    date_schedules: raw.date_schedules || [],
     clinics: (raw.clinics || []).map((c, i) => ({
       id: c.id || `clinic-${i}`,
       name: c.name || `Clinic ${i + 1}`,
@@ -231,66 +237,20 @@ function mapDoctorForBooking(raw) {
   }
 }
 
-function timeToMinutes(timeStr) {
-  const match = String(timeStr || '10:00').match(/^(\d{1,2}):(\d{2})/)
-  if (!match) return 10 * 60
-  return parseInt(match[1], 10) * 60 + parseInt(match[2], 10)
+function buildSlots(docInfo) {
+  return buildSlotsFromWeekly(docInfo, 14)
 }
 
-function buildSlots(docInfo) {
-  if (!docInfo || docInfo.available === false) return []
-
-  const today = new Date()
-  const schedule = docInfo.weekly_schedule || {}
-  const slotMinutes = docInfo.slot_duration_minutes || 30
-  const result = []
-
-  for (let i = 0; i < 7; i++) {
-    const dayStart = new Date(today)
-    dayStart.setDate(today.getDate() + i)
-    dayStart.setHours(0, 0, 0, 0)
-
-    const dayKey = DAY_KEYS[dayStart.getDay()]
-    const dayRule = schedule[dayKey] || { enabled: true, start: '10:00', end: '21:00' }
-
-    if (dayRule.enabled === false) {
-      result.push([])
-      continue
+async function fetchLiveSlots(docId) {
+  try {
+    const { data } = await api.get(`/doctors/${docId}/available-slots`, { params: { days: 14 } })
+    if (data?.success && data.slots_by_date) {
+      return calendarFromAvailabilityApi(data.slots_by_date, 14)
     }
-
-    const startMin = timeToMinutes(dayRule.start)
-    const endMin = timeToMinutes(dayRule.end)
-    const cursor = new Date(dayStart)
-    cursor.setHours(Math.floor(startMin / 60), startMin % 60, 0, 0)
-    const endTime = new Date(dayStart)
-    endTime.setHours(Math.floor(endMin / 60), endMin % 60, 0, 0)
-
-    if (i === 0) {
-      const now = new Date()
-      if (cursor < now) {
-        const bump = new Date(now)
-        bump.setMinutes(bump.getMinutes() + (slotMinutes - (bump.getMinutes() % slotMinutes)))
-        if (bump > cursor) cursor.setTime(bump.getTime())
-      }
-    }
-
-    const times = []
-    while (cursor < endTime) {
-      const formattedTime = cursor.toLocaleTimeString([], {
-        hour: '2-digit',
-        minute: '2-digit',
-      })
-      const slotDate = `${cursor.getDate()}_${cursor.getMonth() + 1}_${cursor.getFullYear()}`
-      const booked = docInfo.slots_booked?.[slotDate]?.includes(formattedTime)
-      if (!booked) {
-        times.push({ datetime: new Date(cursor), time: formattedTime })
-      }
-      cursor.setMinutes(cursor.getMinutes() + slotMinutes)
-    }
-    result.push(times)
+  } catch {
+    /* fallback below */
   }
-
-  return result
+  return null
 }
 
 async function compressScreenshot(file) {
@@ -336,6 +296,20 @@ export default function BookAppointment() {
   const [paymentPreview, setPaymentPreview] = useState('')
   const [paymentMethod, setPaymentMethod] = useState('easypaisa')
   const [paymentReference, setPaymentReference] = useState('')
+  const [docSlots, setDocSlots] = useState([])
+  const [slotsLoading, setSlotsLoading] = useState(false)
+
+  const refreshSlots = async (doctorId, mappedDoc) => {
+    if (!doctorId) return
+    setSlotsLoading(true)
+    try {
+      const live = await fetchLiveSlots(doctorId)
+      if (live) setDocSlots(live)
+      else if (mappedDoc) setDocSlots(buildSlots(mappedDoc))
+    } finally {
+      setSlotsLoading(false)
+    }
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -345,16 +319,18 @@ export default function BookAppointment() {
       try {
         const { data } = await api.get(`/doctors/${docId}`)
         if (!cancelled) {
-          setDocInfo(mapDoctorForBooking(data))
           const mapped = mapDoctorForBooking(data)
+          setDocInfo(mapped)
           const clinics = mapped?.clinics || []
           if (clinics.length === 1) setClinicId(clinics[0].id)
           else if (clinics.length === 0) setClinicId(DEFAULT_CLINIC_ID)
+          await refreshSlots(docId, mapped)
         }
       } catch {
         if (!cancelled) {
           toast.error('Doctor not found')
           setDocInfo(null)
+          setDocSlots([])
         }
       } finally {
         if (!cancelled) setLoading(false)
@@ -367,7 +343,6 @@ export default function BookAppointment() {
     }
   }, [docId])
 
-  const docSlots = useMemo(() => (docInfo ? buildSlots(docInfo) : []), [docInfo])
   const selectedClinic = docInfo?.clinics?.find((c) => c.id === clinicId)
   const daySlots = docSlots[slotIndex] || []
   const hasAnySlots = docSlots.some((d) => d.length > 0)
@@ -384,8 +359,10 @@ export default function BookAppointment() {
   }, [docSlots, slotIndex, slotTime])
 
   const slotDateIso = () => {
+    const picked = daySlots.find((s) => s.time === slotTime)
+    if (picked?.iso) return picked.iso
     const date = daySlots[0]?.datetime || docSlots[slotIndex]?.[0]?.datetime
-    if (!date) return null
+    if (!date) return isoDateOffset(slotIndex)
     const y = date.getFullYear()
     const m = String(date.getMonth() + 1).padStart(2, '0')
     const d = String(date.getDate()).padStart(2, '0')
@@ -421,7 +398,12 @@ export default function BookAppointment() {
       })
 
       if (!bookData?.success || !bookData.appointmentId) {
-        toast.error(bookData?.message || 'Booking failed')
+        const msg = bookData?.message || 'Booking failed'
+        toast.error(msg)
+        if (bookData?.availableSlots?.length) {
+          toast.info(`Still free: ${bookData.availableSlots.join(', ')}`, { autoClose: 8000 })
+        }
+        await refreshSlots(docId, docInfo)
         return
       }
 
@@ -453,7 +435,13 @@ export default function BookAppointment() {
         }
       }
     } catch (error) {
-      toast.error(error.message || 'Could not complete booking')
+      const data = error.response?.data
+      const msg = data?.message || error.message || 'Could not complete booking'
+      toast.error(msg)
+      if (data?.availableSlots?.length) {
+        toast.info(`Available slots: ${data.availableSlots.join(', ')}`, { autoClose: 8000 })
+      }
+      await refreshSlots(docId, docInfo)
       if (createdAppointmentId) {
         try {
           await api.post('/user/cancel-appointment', { appointmentId: createdAppointmentId })
@@ -577,7 +565,7 @@ export default function BookAppointment() {
                 <StepHeader
                   step={2}
                   title="Pick date & time"
-                  description="Choose an available slot in the next 7 days. Times are shown in your local timezone."
+                  description="Choose an available slot in the next 14 days. Times are shown in your local timezone."
                 />
                 {!hasAnySlots ? (
                   <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 px-6 py-12 text-center">

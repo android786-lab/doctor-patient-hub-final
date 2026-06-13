@@ -14,6 +14,9 @@ import {
   listDoctorPatientsPortal,
   getDoctorPortalDashboard,
   getDoctorAssistant,
+  listDoctorAssistantCandidates,
+  assignDoctorAssistant,
+  removeDoctorAssistant,
 } from '../controllers/doctorPortalController.js'
 import {
   createDoctorMedicalHistory,
@@ -35,6 +38,9 @@ const doctorOnly = [authDoctor, requireDoctor, roleMiddleware('doctor')]
 
 router.get('/dashboard', doctorOnly, getDoctorPortalDashboard)
 router.get('/assistant', doctorOnly, getDoctorAssistant)
+router.get('/assistant/candidates', doctorOnly, listDoctorAssistantCandidates)
+router.post('/assistant/assign', doctorOnly, assignDoctorAssistant)
+router.delete('/assistant', doctorOnly, removeDoctorAssistant)
 
 router.get('/profile', doctorOnly, getDoctorPortalProfile)
 router.post('/profile', doctorOnly, setupDoctorProfile)

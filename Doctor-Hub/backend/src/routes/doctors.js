@@ -4,6 +4,7 @@ import {
   getDoctorByIdPublic,
   listDoctorsLegacy,
 } from '../controllers/doctorsController.js'
+import { getDoctorAvailableSlots } from '../controllers/slotsController.js'
 import { listDoctorCatalog } from '../controllers/doctorCatalogController.js'
 import {
   loginDoctor,
@@ -44,6 +45,7 @@ router.get('/admin/all', authAdmin, allDoctors)
 router.get('/admin/dashboard', authAdmin, adminDashboard)
 
 /** Public single doctor — must be after named GET routes */
+router.get('/:id/available-slots', getDoctorAvailableSlots)
 router.get('/:id', getDoctorByIdPublic)
 
 /** Legacy list shape for CareLink UI */
