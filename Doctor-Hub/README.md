@@ -277,6 +277,10 @@ Additional tables (chat, notifications, schedules, admin registration) are creat
 
 ---
 
+## Project Video
+
+https://drive.google.com/file/d/1vZY8-pLFFX3VDjkqIjxJ2l7xDMH7Ti_8/view?usp=sharing
+
 ## Project Structure
 
 ```
