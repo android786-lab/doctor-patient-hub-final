@@ -3,12 +3,18 @@ import { useNavigate } from 'react-router-dom'
 import DoctorPhoto from '@doctor-hub/ui/DoctorPhoto.jsx'
 import { formatMoney } from '@doctor-hub/constants/currency.js'
 
+function displayDoctorName(name) {
+  const n = (name || 'Doctor').trim()
+  if (/^dr\.?\s/i.test(n)) return n
+  return `Dr. ${n}`
+}
+
 function StarRating({ experience }) {
   const years = parseInt(String(experience), 10) || 0
   const score = Math.min(5, 3.5 + Math.min(years, 15) * 0.1)
 
   return (
-    <div className="flex shrink-0 items-center gap-1">
+    <div className="flex items-center gap-1">
       <div className="flex text-amber-400">
         {[1, 2, 3, 4, 5].map((i) => (
           <svg
@@ -20,7 +26,7 @@ function StarRating({ experience }) {
           </svg>
         ))}
       </div>
-      <span className="text-[10px] font-medium text-slate-500">{score.toFixed(1)}</span>
+      <span className="text-[10px] font-semibold text-slate-500">{score.toFixed(1)}</span>
     </div>
   )
 }
@@ -30,8 +36,39 @@ function locationLabel(address, clinics) {
     if (typeof address === 'string') return address
     return address.line1 || address.city || null
   }
-  const city = clinics?.find((c) => c.city)?.city || clinics?.[0]?.city
-  return city || null
+  return clinics?.find((c) => c.city)?.city || clinics?.[0]?.city || null
+}
+
+function MetaRow({ icon, children }) {
+  if (!children) return null
+  return (
+    <li className="flex items-start gap-2 text-[11px] leading-snug text-slate-600 sm:text-xs">
+      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-teal-50 text-teal-700 [&>svg]:h-3 [&>svg]:w-3">
+        {icon}
+      </span>
+      <span className="min-w-0 line-clamp-2">{children}</span>
+    </li>
+  )
+}
+
+const icons = {
+  degree: (
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 14l9-5-9-5-9 5 9 5z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
+    </svg>
+  ),
+  location: (
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+    </svg>
+  ),
+  status: (
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+    </svg>
+  ),
 }
 
 /** Map public + patient API shapes to card fields */
@@ -41,13 +78,13 @@ export function normalizeDoctorForCard(raw) {
     ...raw,
     id: raw.id,
     name: raw.name || raw.full_name,
-    speciality: raw.speciality || raw.specialization || 'General practice',
+    speciality: raw.speciality || raw.specialization || 'General physician',
     fees: Number(raw.fees ?? raw.consultation_fee ?? 0),
     image: raw.image || raw.profile_image,
-    experience: raw.experience || (years ? `${years} years` : null),
+    experience: raw.experience || (years ? `${years} Year${years === 1 ? '' : 's'}` : null),
     available: raw.available !== false && raw.is_active !== false,
     diseases: raw.diseases || [],
-    degree: raw.degree || null,
+    degree: raw.degree || 'MBBS',
     address: raw.address || locationLabel(null, raw.clinics),
     treatment_type: raw.treatment_type
       ? String(raw.treatment_type).charAt(0).toUpperCase() + String(raw.treatment_type).slice(1)
@@ -61,7 +98,6 @@ function DoctorCard({ doctor: rawDoctor, patientPortal = false }) {
   const loc = locationLabel(doctor.address, rawDoctor.clinics)
   const diseases = (doctor.diseases || []).slice(0, 2)
   const moreDiseases = (doctor.diseases?.length || 0) - diseases.length
-  const photoSrc = doctor.image
 
   const goBook = () => {
     const path = patientPortal ? `/patient/book/${doctor.id}` : `/appointment/${doctor.id}`
@@ -69,84 +105,91 @@ function DoctorCard({ doctor: rawDoctor, patientPortal = false }) {
     window.scrollTo(0, 0)
   }
 
-  const metaLine = [doctor.degree, doctor.experience].filter(Boolean).join(' · ')
+  const qualification = [doctor.degree, doctor.experience].filter(Boolean).join(' · ')
 
   return (
-    <article className="group flex gap-2.5 overflow-hidden rounded-xl border border-slate-200/90 bg-white p-2.5 shadow-sm transition duration-200 hover:border-teal-200 hover:shadow-md sm:gap-3 sm:p-3">
-      <DoctorPhoto
-        src={photoSrc}
-        name={doctor.name}
-        alt={doctor.name}
-        variant="card-inline"
-      />
-
-      <div className="flex min-w-0 flex-1 flex-col">
-        <div className="flex items-start justify-between gap-1.5">
-          <div className="min-w-0">
-            <h3 className="truncate font-display text-sm font-semibold leading-tight text-slate-900 sm:text-[0.9375rem]">
-              {doctor.name}
-            </h3>
-            <p className="truncate text-[11px] font-medium text-teal-700 sm:text-xs">{doctor.speciality}</p>
+    <article className="dh-doctor-card group">
+      <div className="dh-doctor-card__inner">
+        {/* Info — left (reference card style) */}
+        <div className="flex min-w-0 flex-1 flex-col">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <h3 className="truncate font-display text-[0.9375rem] font-bold text-slate-900 sm:text-base">
+                {displayDoctorName(doctor.name)}
+              </h3>
+              <p className="mt-0.5 truncate text-xs font-semibold text-teal-700 sm:text-sm">
+                {doctor.speciality}
+              </p>
+              <div className="mt-1.5 h-0.5 w-10 rounded-full bg-gradient-to-r from-teal-500 to-teal-300" />
+            </div>
+            <StarRating experience={doctor.experience} />
           </div>
-          <StarRating experience={doctor.experience} />
-        </div>
 
-        <div className="mt-1 flex flex-wrap items-center gap-1">
-          {doctor.treatment_type && (
-            <span className="rounded bg-teal-50 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-teal-800">
-              {doctor.treatment_type}
-            </span>
-          )}
-          <span
-            className={`rounded px-1.5 py-0.5 text-[9px] font-semibold ${
-              doctor.available ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'
-            }`}
-          >
-            {doctor.available ? 'Available' : 'Booked'}
-          </span>
-        </div>
-
-        {metaLine && (
-          <p className="mt-1 line-clamp-1 text-[10px] text-slate-500 sm:text-[11px]">{metaLine}</p>
-        )}
-
-        {loc && (
-          <p className="mt-0.5 line-clamp-1 text-[10px] text-slate-500 sm:text-[11px]">{loc}</p>
-        )}
-
-        {diseases.length > 0 && (
-          <div className="mt-1.5 flex flex-wrap gap-1">
-            {diseases.map((d) => (
-              <span
-                key={d}
-                className="rounded border border-slate-100 bg-slate-50 px-1.5 py-0.5 text-[9px] font-medium capitalize text-slate-600"
-              >
-                {d}
-              </span>
-            ))}
-            {moreDiseases > 0 && (
-              <span className="rounded bg-teal-50 px-1.5 py-0.5 text-[9px] font-semibold text-teal-700">
-                +{moreDiseases}
-              </span>
+          <ul className="mt-2.5 space-y-1.5">
+            {qualification && (
+              <MetaRow icon={icons.degree}>{qualification}</MetaRow>
             )}
-          </div>
-        )}
+            {loc && (
+              <MetaRow icon={icons.location}>{loc}</MetaRow>
+            )}
+            <MetaRow icon={icons.status}>
+              {doctor.available ? 'Available for booking today' : 'Currently fully booked'}
+            </MetaRow>
+          </ul>
 
-        <div className="mt-auto flex items-center justify-between gap-2 pt-2">
-          <div className="min-w-0">
-            <p className="text-[9px] font-medium uppercase tracking-wide text-slate-400">Fee</p>
-            <p className="text-base font-bold leading-none text-slate-900 sm:text-lg">
-              {formatMoney(doctor.fees)}
-            </p>
+          {(doctor.treatment_type || diseases.length > 0) && (
+            <div className="mt-2 flex flex-wrap gap-1">
+              {doctor.treatment_type && (
+                <span className="rounded-md bg-teal-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-teal-800">
+                  {doctor.treatment_type}
+                </span>
+              )}
+              {diseases.map((d) => (
+                <span
+                  key={d}
+                  className="rounded-md border border-slate-100 bg-slate-50 px-2 py-0.5 text-[10px] font-medium capitalize text-slate-600"
+                >
+                  {d}
+                </span>
+              ))}
+              {moreDiseases > 0 && (
+                <span className="rounded-md bg-teal-50 px-2 py-0.5 text-[10px] font-semibold text-teal-700">
+                  +{moreDiseases}
+                </span>
+              )}
+            </div>
+          )}
+
+          <div className="mt-auto flex items-end justify-between gap-2 border-t border-slate-100 pt-3">
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                Consultation
+              </p>
+              <p className="font-display text-lg font-bold text-slate-900 sm:text-xl">
+                {formatMoney(doctor.fees)}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={goBook}
+              disabled={!doctor.available}
+              className="rounded-xl bg-gradient-to-r from-teal-600 to-teal-700 px-3.5 py-2 text-xs font-semibold text-white shadow-sm shadow-teal-600/25 transition hover:from-teal-700 hover:to-teal-800 disabled:from-slate-300 disabled:to-slate-300 disabled:shadow-none"
+            >
+              Book slot
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={goBook}
-            disabled={!doctor.available}
-            className="shrink-0 rounded-lg bg-teal-600 px-2.5 py-1.5 text-[11px] font-semibold text-white transition hover:bg-teal-700 disabled:bg-slate-300 sm:px-3 sm:py-2 sm:text-xs"
-          >
-            Book slot
-          </button>
+        </div>
+
+        {/* Photo — right with accent frame */}
+        <div className="dh-doctor-card__photo-frame shrink-0">
+          <span className="dh-doctor-card__photo-accent dh-doctor-card__photo-accent--tl" aria-hidden />
+          <span className="dh-doctor-card__photo-accent dh-doctor-card__photo-accent--br" aria-hidden />
+          <DoctorPhoto
+            src={doctor.image}
+            name={doctor.name}
+            alt={doctor.name}
+            variant="card-portrait"
+          />
         </div>
       </div>
     </article>

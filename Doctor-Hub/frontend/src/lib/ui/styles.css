@@ -181,17 +181,50 @@
     @apply block object-cover object-center;
   }
 
-  .dh-doctor-photo:not(.dh-doctor-photo--card) img {
+  .dh-doctor-photo:not(.dh-doctor-photo--card):not(.dh-doctor-photo--card-portrait):not(.dh-doctor-photo--card-inline) img {
     @apply h-full w-full max-h-full max-w-full;
   }
 
-  /* List cards: compact square thumbnail (horizontal card layout) */
+  /* Doctor list card — medical card layout */
+  .dh-doctor-card {
+    @apply overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-sm transition duration-200 hover:border-teal-200 hover:shadow-md;
+  }
+
+  .dh-doctor-card__inner {
+    @apply flex items-stretch gap-3 p-3 sm:gap-4 sm:p-4;
+  }
+
+  .dh-doctor-card__photo-frame {
+    @apply relative self-center p-1;
+  }
+
+  .dh-doctor-card__photo-accent {
+    @apply pointer-events-none absolute z-10 h-7 w-7 border-teal-500 sm:h-8 sm:w-8;
+  }
+
+  .dh-doctor-card__photo-accent--tl {
+    @apply -left-px -top-px rounded-tl-xl border-l-[3px] border-t-[3px];
+  }
+
+  .dh-doctor-card__photo-accent--br {
+    @apply -bottom-px -right-px rounded-br-xl border-b-[3px] border-r-[3px];
+  }
+
+  .dh-doctor-photo--card-portrait {
+    @apply relative h-[5.75rem] w-[5.75rem] overflow-hidden rounded-xl bg-slate-100 sm:h-[6.25rem] sm:w-[6.25rem];
+  }
+
+  .dh-doctor-photo--card-portrait > img {
+    @apply absolute inset-0 h-full w-full object-cover object-center;
+  }
+
+  /* Legacy inline thumb */
   .dh-doctor-photo--card-inline {
-    @apply h-[4.5rem] w-[4.5rem] shrink-0 rounded-xl sm:h-[5rem] sm:w-[5rem];
+    @apply relative h-[4.5rem] w-[4.5rem] shrink-0 overflow-hidden rounded-xl sm:h-[5rem] sm:w-[5rem];
   }
 
   .dh-doctor-photo--card-inline > img {
-    @apply h-full w-full object-cover object-top;
+    @apply absolute inset-0 h-full w-full object-cover object-center;
   }
 
   /* Detail / booking banner — natural crop, no zoom hack */
