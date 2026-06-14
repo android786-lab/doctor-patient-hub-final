@@ -18,6 +18,10 @@ Doctor Hub connects **patients**, **doctors**, **assistants**, and **hospital ad
 | **Payments** | Manual bank-transfer verification, Stripe (optional) |
 | **Deployment** | Vercel (three apps: patient, staff, API) — see `DEPLOYMENT.md` |
 
+## Live URL
+
+https://doctor-patient-hub-final-fs2u.vercel.app/
+
 ---
 
 ## User Roles
