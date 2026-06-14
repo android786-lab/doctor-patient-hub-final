@@ -7,6 +7,41 @@ function isMissingColumn(err) {
   return err?.code === 'PGRST204' || /column|does not exist|schema cache/i.test(msg)
 }
 
+function missingColumnName(err) {
+  const msg = err?.message || ''
+  const patterns = [
+    /Could not find the '(\w+)' column of 'doctors'/i,
+    /doctors\.(\w+) does not exist/i,
+    /column "(\w+)" of relation "doctors"/i,
+    /'(\w+)' column of 'doctors'/i,
+  ]
+  for (const re of patterns) {
+    const m = msg.match(re)
+    if (m?.[1]) return m[1]
+  }
+  return null
+}
+
+/** Update doctors row, dropping columns that are absent in this Supabase schema. */
+async function updateDoctorRowResilient(doctorRowId, patch) {
+  const attempt = { ...patch }
+  let lastError = null
+
+  for (let i = 0; i < 12 && Object.keys(attempt).length > 0; i++) {
+    const { error } = await supabase.from('doctors').update(attempt).eq('id', doctorRowId)
+    if (!error) return
+    lastError = error
+    if (!isMissingColumn(error)) throw error
+    const col = missingColumnName(error)
+    if (!col || !(col in attempt)) break
+    delete attempt[col]
+  }
+
+  if (Object.keys(attempt).length > 0 && lastError) {
+    throw lastError
+  }
+}
+
 function normalizeAddress(addr) {
   if (!addr) return { line1: '', line2: '' }
   if (typeof addr === 'object' && (addr.line1 !== undefined || addr.line2 !== undefined)) {
@@ -156,20 +191,17 @@ export async function saveDoctorProfileModule(
   }
 
   let lastError = null
-  for (const attempt of [patch, { ...patch }]) {
-    if (!Object.keys(attempt).length) break
-    const { error } = await supabase.from('doctors').update(attempt).eq('id', doctorRowId)
-    if (!error) break
-    lastError = error
-    if (!isMissingColumn(error)) throw error
-    const match = (error.message || '').match(/doctors\.(\w+) does not exist/i)
-    if (!match) break
-    delete attempt[match[1]]
+  if (Object.keys(patch).length) {
+    try {
+      await updateDoctorRowResilient(doctorRowId, patch)
+    } catch (err) {
+      lastError = err
+      if (!isMissingColumn(err)) throw err
+    }
   }
 
   if (Object.keys(patch).length && lastError) {
-    const { error } = await supabase.from('doctors').update(patch).eq('id', doctorRowId)
-    if (error && !isMissingColumn(error)) throw error
+    throw lastError
   }
 
   if (address !== undefined) {
@@ -237,13 +269,14 @@ export async function updateDoctorProfileForUi(
   let lastError = null
   let doctorsUpdated = false
   for (const patch of attempts) {
-    const { error } = await supabase.from('doctors').update(patch).eq('id', doctorRowId)
-    if (!error) {
+    try {
+      await updateDoctorRowResilient(doctorRowId, patch)
       doctorsUpdated = true
       break
+    } catch (err) {
+      lastError = err
+      if (!isMissingColumn(err)) throw err
     }
-    lastError = error
-    if (!isMissingColumn(error)) throw error
   }
 
   if (!doctorsUpdated && attempts.length) {

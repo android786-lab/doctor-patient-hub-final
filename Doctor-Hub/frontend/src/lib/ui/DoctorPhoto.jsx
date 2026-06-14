@@ -8,7 +8,7 @@ const PLACEHOLDER_SVG =
 
 /**
  * Fixed-size doctor photos project-wide.
- * variant: card (list/grid), profile (detail), book (booking), thumb (compact), appointment (my appointments list)
+ * variant: card-inline (compact list), card (banner), profile, book, thumb, appointment
  */
 export default function DoctorPhoto({
   src,

@@ -194,6 +194,7 @@ export function mapDoctorSummary(row, profile) {
 
   const years = row.experience_years ?? 0
   const verified = row.is_verified !== false
+  const fee = Number(row.consultation_fee ?? row.fees ?? 0)
 
   return {
     id: row.id,
@@ -203,7 +204,8 @@ export function mapDoctorSummary(row, profile) {
     diseases: row.diseases || [],
     bio: row.bio ?? null,
     profile_image: displayImage(row, profile),
-    consultation_fee: Number(row.consultation_fee ?? 0),
+    consultation_fee: fee,
+    fees: fee,
     experience_years: years,
     experience: years ? `${years} years` : row.experience || null,
     rating: verified ? 4.8 : 4.5,

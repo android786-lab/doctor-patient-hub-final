@@ -12,5 +12,6 @@ export function isUsablePhoto(url) {
 
 export function getDoctorPhotoUrl(name, image) {
   if (isUsablePhoto(image)) return image.trim()
-  return null
+  const label = encodeURIComponent((name || 'Doctor').trim() || 'Doctor')
+  return `https://ui-avatars.com/api/?name=${label}&background=0d9488&color=fff&size=256&bold=true`
 }

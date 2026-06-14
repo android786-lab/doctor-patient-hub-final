@@ -1,3 +1,3 @@
-/** One doctor fills the row; multiple doctors tile at ~296px minimum column width. */
+/** Compact doctor cards — narrower columns, more per row on mobile. */
 export const DOCTOR_CARD_GRID_CLASS =
-  'grid gap-5 [grid-template-columns:repeat(auto-fill,minmax(min(100%,18.5rem),1fr))]'
+  'mx-auto grid w-full max-w-6xl gap-3 sm:gap-4 [grid-template-columns:repeat(auto-fill,minmax(min(100%,15.5rem),1fr))]'
