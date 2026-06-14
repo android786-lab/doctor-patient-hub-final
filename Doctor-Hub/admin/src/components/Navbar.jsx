@@ -52,8 +52,16 @@ export default function Navbar({ onMenuClick }) {
     }
   }, [staffRole, aToken, backendUrl])
 
-  const logout = () => {
-    goToPublicLanding()
+  const [loggingOut, setLoggingOut] = useState(false)
+
+  const logout = async () => {
+    if (loggingOut) return
+    setLoggingOut(true)
+    try {
+      await goToPublicLanding()
+    } catch {
+      setLoggingOut(false)
+    }
   }
 
   const badge =
@@ -101,8 +109,8 @@ export default function Navbar({ onMenuClick }) {
             </a>
           )}
 
-          <button type="button" onClick={logout} className="dh-btn dh-btn-compact">
-            Logout
+          <button type="button" onClick={logout} disabled={loggingOut} className="dh-btn dh-btn-compact">
+            {loggingOut ? 'Logging out…' : 'Logout'}
           </button>
         </div>
       </div>

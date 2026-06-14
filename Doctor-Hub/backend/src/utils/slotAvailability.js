@@ -80,7 +80,7 @@ export function generateHourlySlotsFromRange(start, end, stepMinutes = 60) {
   return slots
 }
 
-export function normalizeDaySchedule(day, fallbackSlots = STANDARD_HOURLY_SLOTS) {
+export function normalizeDaySchedule(day, fallbackSlots = STANDARD_HOURLY_SLOTS, stepMinutes = 30) {
   if (!day || typeof day !== 'object') {
     return { enabled: false, start: '09:00', end: '17:00', time_slots: [] }
   }
@@ -91,10 +91,11 @@ export function normalizeDaySchedule(day, fallbackSlots = STANDARD_HOURLY_SLOTS)
 
   const start = String(day.start || '09:00').slice(0, 5)
   const end = String(day.end || '17:00').slice(0, 5)
+  const step = Math.min(120, Math.max(10, parseInt(stepMinutes, 10) || 30))
 
   if (!time_slots.length && day.enabled !== false) {
     if (day.start && day.end) {
-      time_slots = generateHourlySlotsFromRange(start, end, 60)
+      time_slots = generateHourlySlotsFromRange(start, end, step)
     } else {
       time_slots = [...fallbackSlots]
     }
@@ -110,13 +111,13 @@ export function normalizeDaySchedule(day, fallbackSlots = STANDARD_HOURLY_SLOTS)
   }
 }
 
-export function normalizeWeeklyScheduleWithSlots(input) {
+export function normalizeWeeklyScheduleWithSlots(input, stepMinutes = 30) {
   const out = {}
   for (const key of [...DAY_KEYS, ...JS_DAY_TO_KEY]) {
-    if (input?.[key]) out[key] = normalizeDaySchedule(input[key])
+    if (input?.[key]) out[key] = normalizeDaySchedule(input[key], STANDARD_HOURLY_SLOTS, stepMinutes)
   }
   for (const key of JS_DAY_TO_KEY) {
-    if (!out[key]) out[key] = normalizeDaySchedule(null)
+    if (!out[key]) out[key] = normalizeDaySchedule(null, STANDARD_HOURLY_SLOTS, stepMinutes)
   }
   return out
 }

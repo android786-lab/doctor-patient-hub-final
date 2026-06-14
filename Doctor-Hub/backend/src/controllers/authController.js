@@ -338,13 +338,17 @@ export async function login(req, res) {
 
 export async function logout(req, res) {
 
+  const isProd = process.env.NODE_ENV === 'production'
+
   res.clearCookie('token', {
 
     httpOnly: true,
 
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    sameSite: isProd ? 'none' : 'lax',
 
-    secure: process.env.NODE_ENV === 'production',
+    secure: isProd,
+
+    path: '/',
 
   })
 

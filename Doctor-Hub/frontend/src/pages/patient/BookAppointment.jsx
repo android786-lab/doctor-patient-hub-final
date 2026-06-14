@@ -225,7 +225,7 @@ function mapDoctorForBooking(raw) {
     available: raw.available !== false && raw.is_active !== false,
     slots_booked: raw.slots_booked || {},
     weekly_schedule: raw.weekly_schedule || {},
-    slot_duration_minutes: raw.slot_duration_minutes || 60,
+    slot_duration_minutes: raw.slot_duration_minutes || 30,
     date_schedules: raw.date_schedules || [],
     clinics: (raw.clinics || []).map((c, i) => ({
       id: c.id || `clinic-${i}`,

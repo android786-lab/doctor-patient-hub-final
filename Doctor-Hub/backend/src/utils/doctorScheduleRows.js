@@ -46,26 +46,28 @@ import {
   normalizeWeeklyScheduleWithSlots,
 } from './slotAvailability.js'
 
-export function normalizeWeeklySchedule(input) {
-  return normalizeWeeklyScheduleWithSlots(input || DEFAULT_WEEKLY_SCHEDULE)
+export function normalizeWeeklySchedule(input, slotDurationMinutes = 30) {
+  return normalizeWeeklyScheduleWithSlots(input || DEFAULT_WEEKLY_SCHEDULE, slotDurationMinutes)
 }
 
 export function normalizeSlotDuration(value) {
   const n = parseInt(value, 10)
-  if ([15, 30, 45, 60].includes(n)) return n
+  if (!Number.isFinite(n)) return 30
+  if (n >= 10 && n <= 120) return n
   return 30
 }
 
 export function extractScheduleFromDoctorRow(row) {
-  if (!row) return normalizeWeeklySchedule(DEFAULT_WEEKLY_SCHEDULE)
+  const duration = extractSlotDurationFromRow(row)
+  if (!row) return normalizeWeeklySchedule(DEFAULT_WEEKLY_SCHEDULE, duration)
   if (row.weekly_schedule && Object.keys(row.weekly_schedule).length) {
-    return normalizeWeeklySchedule(row.weekly_schedule)
+    return normalizeWeeklySchedule(row.weekly_schedule, duration)
   }
   const sb = row.slots_booked
   if (sb && typeof sb === 'object' && sb[META_SCHEDULE]) {
-    return normalizeWeeklySchedule(sb[META_SCHEDULE])
+    return normalizeWeeklySchedule(sb[META_SCHEDULE], duration)
   }
-  return normalizeWeeklySchedule(DEFAULT_WEEKLY_SCHEDULE)
+  return normalizeWeeklySchedule(DEFAULT_WEEKLY_SCHEDULE, duration)
 }
 
 export function extractSlotDurationFromRow(row) {
@@ -82,7 +84,7 @@ function scheduleFromSlotsBooked(slotsBooked) {
   if (!slotsBooked || typeof slotsBooked !== 'object') return null
   if (!slotsBooked[META_SCHEDULE]) return null
   return {
-    weekly_schedule: normalizeWeeklySchedule(slotsBooked[META_SCHEDULE]),
+    weekly_schedule: normalizeWeeklySchedule(slotsBooked[META_SCHEDULE], normalizeSlotDuration(slotsBooked[META_DURATION])),
     slot_duration_minutes: normalizeSlotDuration(slotsBooked[META_DURATION]),
   }
 }
@@ -100,18 +102,14 @@ async function loadFromSchedulesTable(doctorRowId) {
   }
   if (!rows?.length) return null
 
-  const weekly_schedule = normalizeWeeklySchedule(
-    Object.fromEntries(DAY_KEYS.map((k) => [k, { enabled: false, start: '10:00', end: '17:00' }]))
+  const raw = Object.fromEntries(
+    DAY_KEYS.map((k) => [k, { enabled: false, start: '10:00', end: '17:00' }])
   )
-  for (const key of DAY_KEYS) {
-    weekly_schedule[key].enabled = false
-  }
-
   let slot_duration_minutes = 30
   for (const r of rows) {
     const key = DOW_TO_DAY[r.day_of_week]
     if (!key) continue
-    weekly_schedule[key] = {
+    raw[key] = {
       enabled: true,
       start: fromTimeValue(r.start_time),
       end: fromTimeValue(r.end_time),
@@ -121,7 +119,10 @@ async function loadFromSchedulesTable(doctorRowId) {
     }
   }
 
-  return { weekly_schedule, slot_duration_minutes }
+  return {
+    weekly_schedule: normalizeWeeklySchedule(raw, slot_duration_minutes),
+    slot_duration_minutes,
+  }
 }
 
 async function resolveClinicIdForSchedule(doctorRowId) {
@@ -264,19 +265,21 @@ export async function attachSchedulesFromTable(rows) {
   return rows.map((row) => {
     const list = byDoctor[row.id]
     if (!list?.length) return row
-    const weekly_schedule = normalizeWeeklySchedule(DEFAULT_WEEKLY_SCHEDULE)
-    for (const key of DAY_KEYS) weekly_schedule[key].enabled = false
+    const raw = Object.fromEntries(
+      DAY_KEYS.map((k) => [k, { enabled: false, start: '10:00', end: '17:00' }])
+    )
     let slot_duration_minutes = 30
     for (const r of list) {
       const key = DOW_TO_DAY[r.day_of_week]
       if (!key) continue
-      weekly_schedule[key] = {
+      raw[key] = {
         enabled: true,
         start: fromTimeValue(r.start_time),
         end: fromTimeValue(r.end_time),
       }
       if (r.slot_duration_minutes) slot_duration_minutes = normalizeSlotDuration(r.slot_duration_minutes)
     }
+    const weekly_schedule = normalizeWeeklySchedule(raw, slot_duration_minutes)
     return { ...row, weekly_schedule, slot_duration_minutes }
   })
 }
@@ -353,7 +356,7 @@ export async function saveDoctorSchedule(contextUserId, { weekly_schedule, slot_
   const { doctorRowId } = await resolveDoctorContextIdsOrCreate(contextUserId)
   if (!doctorRowId) throw new Error('Doctor profile not found')
 
-  const schedule = normalizeWeeklySchedule(weekly_schedule)
+  const schedule = normalizeWeeklySchedule(weekly_schedule, duration)
   const duration = normalizeSlotDuration(slot_duration_minutes)
 
   const columnAttempts = [

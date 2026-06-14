@@ -1,9 +1,15 @@
 import { useEffect, useRef, useState } from 'react'
 import { useInView, useReducedMotion } from 'framer-motion'
 
+function isTouchDevice() {
+  if (typeof window === 'undefined') return false
+  return window.matchMedia('(hover: none) and (pointer: coarse)').matches
+}
+
 function parseNumericValue(value) {
   const text = String(value ?? '').trim()
-  const match = text.match(/^(\d+(?:\.\d+)?)(.*)$/)
+  if (!text || text.includes('/')) return null
+  const match = text.match(/^(\d+(?:\.\d+)?)(\+|%)?$/)
   if (!match) return null
   return {
     end: parseFloat(match[1]),
@@ -13,7 +19,8 @@ function parseNumericValue(value) {
 
 /**
  * Count-up animation when scrolled into view.
- * Non-numeric values (e.g. "Verified") render as-is.
+ * Non-numeric values (e.g. "24/7", "Verified") render as-is.
+ * Touch devices show the final value immediately to avoid flicker on mobile.
  */
 export default function CountUp({
   value,
@@ -22,19 +29,28 @@ export default function CountUp({
   as: Tag = 'span',
 }) {
   const reduceMotion = useReducedMotion()
+  const preferStatic = reduceMotion || isTouchDevice()
   const ref = useRef(null)
-  const inView = useInView(ref, { once: true, margin: '-40px' })
+  const inView = useInView(ref, { once: true, margin: '0px 0px -5% 0px' })
   const parsed = parseNumericValue(value)
-  const [display, setDisplay] = useState(parsed ? 0 : value)
+  const finishedRef = useRef(false)
+  const [display, setDisplay] = useState(() => {
+    if (!parsed) return value
+    return preferStatic ? parsed.end : 0
+  })
 
   useEffect(() => {
-    if (!parsed) return
+    if (!parsed || finishedRef.current) return
 
-    if (reduceMotion || !inView) {
+    if (preferStatic) {
       setDisplay(parsed.end)
+      finishedRef.current = true
       return
     }
 
+    if (!inView) return
+
+    finishedRef.current = true
     let frameId
     const startTime = performance.now()
     const ms = duration * 1000
@@ -51,7 +67,7 @@ export default function CountUp({
 
     frameId = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(frameId)
-  }, [inView, reduceMotion, parsed, duration])
+  }, [inView, preferStatic, parsed, duration])
 
   if (!parsed) {
     return <Tag className={className}>{value}</Tag>

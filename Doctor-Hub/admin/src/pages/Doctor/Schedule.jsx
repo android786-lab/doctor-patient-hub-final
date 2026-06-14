@@ -4,6 +4,14 @@ import axiosClient from '../../lib/axiosClient'
 import { DoctorContext } from '../../context/DoctorContext'
 import PageHeader from '../../components/admin/PageHeader'
 import { Link } from 'react-router-dom'
+import {
+  WORK_START,
+  WORK_END,
+  SLOT_DURATION_OPTIONS,
+  buildSlotsForDuration,
+  formatSlotLabel,
+  normalizeSlotDuration,
+} from '../../utils/slotHelpers.js'
 
 const DAYS = [
   { key: 'mon', label: 'Monday', short: 'Mon' },
@@ -15,41 +23,31 @@ const DAYS = [
   { key: 'sun', label: 'Sunday', short: 'Sun' },
 ]
 
-/** 1-hour slots from 9 AM to 5 PM */
-const HOURLY_SLOTS = [
-  '09:00',
-  '10:00',
-  '11:00',
-  '12:00',
-  '13:00',
-  '14:00',
-  '15:00',
-  '16:00',
-]
-
 const emptyWeek = () =>
   Object.fromEntries(
     DAYS.map((d) => [
       d.key,
-      { enabled: false, start: '09:00', end: '17:00', time_slots: [] },
+      { enabled: false, start: WORK_START, end: WORK_END, time_slots: [] },
     ])
   )
 
-function mergeLoadedSchedule(raw) {
+function mergeLoadedSchedule(raw, durationMinutes) {
   const base = emptyWeek()
+  const defaultSlots = buildSlotsForDuration(durationMinutes)
   if (!raw || typeof raw !== 'object') return base
+
   for (const d of DAYS) {
     const day = raw[d.key]
     if (!day) continue
     const slots = Array.isArray(day.time_slots)
       ? day.time_slots.filter(Boolean)
       : day.enabled !== false
-        ? HOURLY_SLOTS
+        ? defaultSlots
         : []
     base[d.key] = {
       enabled: day.enabled !== false && slots.length > 0,
-      start: day.start || '09:00',
-      end: day.end || '17:00',
+      start: day.start || WORK_START,
+      end: day.end || WORK_END,
       time_slots: slots,
     }
   }
@@ -61,10 +59,14 @@ export default function DoctorSchedule() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [weeklySchedule, setWeeklySchedule] = useState(emptyWeek)
+  const [slotDuration, setSlotDuration] = useState(30)
+  const [customDuration, setCustomDuration] = useState('')
   const [accepting, setAccepting] = useState(true)
   const [activeDay, setActiveDay] = useState('mon')
 
   const headers = () => ({ headers: { dtoken: dToken } })
+
+  const slotGrid = useMemo(() => buildSlotsForDuration(slotDuration), [slotDuration])
 
   const enabledDays = useMemo(
     () => DAYS.filter((d) => weeklySchedule[d.key]?.enabled),
@@ -82,7 +84,11 @@ export default function DoctorSchedule() {
     try {
       const { data } = await axiosClient.get(`${backendUrl}/api/doctor/schedule`, headers())
       if (data.success) {
-        setWeeklySchedule(mergeLoadedSchedule(data.weekly_schedule))
+        const duration = normalizeSlotDuration(data.slot_duration_minutes)
+        setSlotDuration(duration)
+        const preset = SLOT_DURATION_OPTIONS.some((o) => o.value === duration)
+        setCustomDuration(preset ? '' : String(duration))
+        setWeeklySchedule(mergeLoadedSchedule(data.weekly_schedule, duration))
         setAccepting(data.accepting_appointments !== false)
       } else {
         toast.error(data.message)
@@ -98,6 +104,31 @@ export default function DoctorSchedule() {
     if (dToken) load()
   }, [dToken])
 
+  const applyDuration = (minutes) => {
+    const next = normalizeSlotDuration(minutes)
+    setSlotDuration(next)
+    const preset = SLOT_DURATION_OPTIONS.some((o) => o.value === next)
+    setCustomDuration(preset ? '' : String(next))
+
+    const grid = buildSlotsForDuration(next)
+    const gridSet = new Set(grid)
+
+    setWeeklySchedule((prev) => {
+      const out = { ...prev }
+      for (const d of DAYS) {
+        const day = prev[d.key]
+        if (!day?.enabled) continue
+        const kept = (day.time_slots || []).filter((s) => gridSet.has(s))
+        out[d.key] = {
+          ...day,
+          time_slots: kept.length ? kept : [...grid],
+          enabled: kept.length > 0 || grid.length > 0,
+        }
+      }
+      return out
+    })
+  }
+
   const toggleWorkingDay = (key) => {
     setWeeklySchedule((prev) => {
       const day = prev[key] || {}
@@ -107,9 +138,9 @@ export default function DoctorSchedule() {
         [key]: {
           ...day,
           enabled: nextEnabled,
-          start: '09:00',
-          end: '17:00',
-          time_slots: nextEnabled ? [...HOURLY_SLOTS] : [],
+          start: WORK_START,
+          end: WORK_END,
+          time_slots: nextEnabled ? [...slotGrid] : [],
         },
       }
     })
@@ -130,8 +161,8 @@ export default function DoctorSchedule() {
           ...day,
           enabled: current.length > 0,
           time_slots: current,
-          start: '09:00',
-          end: '17:00',
+          start: WORK_START,
+          end: WORK_END,
         },
       }
     })
@@ -143,9 +174,9 @@ export default function DoctorSchedule() {
       [dayKey]: {
         ...prev[dayKey],
         enabled: true,
-        time_slots: [...HOURLY_SLOTS],
-        start: '09:00',
-        end: '17:00',
+        time_slots: [...slotGrid],
+        start: WORK_START,
+        end: WORK_END,
       },
     }))
   }
@@ -174,8 +205,8 @@ export default function DoctorSchedule() {
         const day = weeklySchedule[d.key]
         payload[d.key] = {
           enabled: day.enabled && day.time_slots?.length > 0,
-          start: day.start || '09:00',
-          end: day.end || '17:00',
+          start: day.start || WORK_START,
+          end: day.end || WORK_END,
           time_slots: day.enabled ? day.time_slots || [] : [],
         }
       }
@@ -184,7 +215,7 @@ export default function DoctorSchedule() {
         `${backendUrl}/api/doctor/schedule`,
         {
           weekly_schedule: payload,
-          slot_duration_minutes: 60,
+          slot_duration_minutes: slotDuration,
         },
         headers()
       )
@@ -197,12 +228,16 @@ export default function DoctorSchedule() {
     }
   }
 
+  const durationLabel =
+    SLOT_DURATION_OPTIONS.find((o) => o.value === slotDuration)?.label ||
+    `${slotDuration} min`
+
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       <PageHeader
         eyebrow="Scheduling"
         title="Weekly availability"
-        description="Choose which days you work, then pick the hourly slots patients can book."
+        description="Set your appointment length and choose which time slots patients can book."
       />
 
       {!accepting && (
@@ -218,7 +253,56 @@ export default function DoctorSchedule() {
       <form onSubmit={save} className="mt-6 space-y-6">
         <section className="dh-card p-6">
           <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
-            Step 1 · Working days
+            Step 1 · Appointment length
+          </h3>
+          <p className="mt-1 text-sm text-slate-600">
+            How long is each appointment? Slots are generated in {durationLabel} intervals (9 AM – 5 PM).
+          </p>
+          {loading ? (
+            <div className="mt-4 h-12 animate-pulse rounded-xl bg-slate-100" />
+          ) : (
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              {SLOT_DURATION_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => applyDuration(opt.value)}
+                  className={`rounded-xl px-4 py-2.5 text-sm font-semibold ring-1 transition ${
+                    slotDuration === opt.value
+                      ? 'bg-teal-700 text-white ring-teal-700'
+                      : 'bg-white text-slate-700 ring-slate-200 hover:bg-slate-50'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+              <div className="flex items-center gap-2">
+                <label htmlFor="custom-duration" className="text-sm text-slate-600">
+                  Custom
+                </label>
+                <input
+                  id="custom-duration"
+                  type="number"
+                  min={10}
+                  max={120}
+                  step={5}
+                  placeholder="e.g. 20"
+                  value={customDuration}
+                  onChange={(e) => setCustomDuration(e.target.value)}
+                  onBlur={() => {
+                    if (customDuration) applyDuration(customDuration)
+                  }}
+                  className="w-20 rounded-lg border border-slate-200 px-2 py-2 text-sm"
+                />
+                <span className="text-sm text-slate-500">min</span>
+              </div>
+            </div>
+          )}
+        </section>
+
+        <section className="dh-card p-6">
+          <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+            Step 2 · Working days
           </h3>
           <p className="mt-1 text-sm text-slate-600">
             Select every day you accept appointments (e.g. Mon, Wed, Thu only).
@@ -251,10 +335,10 @@ export default function DoctorSchedule() {
         {enabledDays.length > 0 && !loading && (
           <section className="dh-card p-6">
             <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
-              Step 2 · Free slots per day
+              Step 3 · Free slots per day
             </h3>
             <p className="mt-1 text-sm text-slate-600">
-              For each working day, tap the hours you are free (9 AM – 5 PM, 1 hour each).
+              For each working day, tap the {durationLabel} slots you are free ({WORK_START} – {WORK_END}).
             </p>
 
             <div className="mt-4 flex flex-wrap gap-2 border-b border-slate-100 pb-3">
@@ -291,8 +375,8 @@ export default function DoctorSchedule() {
               </button>
             </div>
 
-            <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-              {HOURLY_SLOTS.map((slot) => {
+            <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
+              {slotGrid.map((slot) => {
                 const selected = (weeklySchedule[activeDay]?.time_slots || []).includes(slot)
                 return (
                   <button
@@ -305,14 +389,16 @@ export default function DoctorSchedule() {
                         : 'bg-slate-50 text-slate-700 ring-slate-200 hover:bg-white'
                     }`}
                   >
-                    {slot}
+                    {formatSlotLabel(slot)}
                   </button>
                 )
               })}
             </div>
             <p className="mt-3 text-xs text-slate-500">
               {DAYS.find((d) => d.key === activeDay)?.label}:{' '}
-              {(weeklySchedule[activeDay]?.time_slots || []).join(', ') || 'No slots — day off'}
+              {(weeklySchedule[activeDay]?.time_slots || [])
+                .map(formatSlotLabel)
+                .join(', ') || 'No slots — day off'}
             </p>
           </section>
         )}
@@ -330,7 +416,7 @@ export default function DoctorSchedule() {
       <div className="dh-card mt-8 p-6 text-sm text-slate-600">
         <p className="font-semibold text-slate-800">How patients book</p>
         <ol className="mt-2 list-inside list-decimal space-y-1">
-          <li>Patients only see the days and hours you selected above.</li>
+          <li>Each slot is {durationLabel} long — patients only see times you selected.</li>
           <li>Already booked slots disappear automatically.</li>
           <li>If a slot was just taken, they are shown other free slots on that day.</li>
         </ol>
