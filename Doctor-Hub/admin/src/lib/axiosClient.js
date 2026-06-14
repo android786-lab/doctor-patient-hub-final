@@ -2,7 +2,9 @@ import axios from 'axios'
 import { toast } from 'react-toastify'
 import { friendlyUserMessage, NETWORK_UNAVAILABLE } from '../utils/friendlyUserMessage.js'
 
-const client = axios.create()
+const client = axios.create({
+  withCredentials: true,
+})
 
 function isNetworkError(error) {
   const msg = error?.message || ''
@@ -24,6 +26,7 @@ client.interceptors.response.use(
     if (error.response?.status === 401 || error.response?.data?.code === 'AUTH_INVALID') {
       localStorage.removeItem('aToken')
       localStorage.removeItem('dToken')
+      localStorage.removeItem('token')
       const err = new Error(message)
       err.isAuthError = true
       return Promise.reject(err)

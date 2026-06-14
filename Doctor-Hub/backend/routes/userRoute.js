@@ -1,3 +1,4 @@
+// DEPRECATED — use /api/auth/*, /api/patient/*, /api/appointments/*, /api/payments/* instead.
 import express from 'express';
 import { bookAppointment, cancelAppointment, getProfile, listAppointment, loginUser, paymentSTRIPE, registerUser, updateProfile, verifySTRIPE } from '../controllers/userController.js';
 import { paymentManual } from '../src/controllers/manualPaymentController.js';

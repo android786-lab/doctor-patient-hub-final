@@ -1,9 +1,11 @@
 import { useContext, useEffect, useState, lazy, Suspense } from 'react'
-import { decodeJwtPayload } from './utils/jwt.js'
 import { roleFromToken } from './utils/staffRole.js'
+import { persistStaffToken, staffDashboardPath } from './utils/staffTokenStorage.js'
+import axiosClient from './lib/axiosClient'
+import { API_BASE_URL } from './utils/constants.js'
 import { DoctorContext } from './context/DoctorContext'
 import { AdminContext } from './context/AdminContext'
-import { Route, Routes, Navigate, useLocation, useNavigate } from 'react-router-dom'
+import { Route, Routes, Navigate, useLocation } from 'react-router-dom'
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 
@@ -11,6 +13,10 @@ import Navbar from './components/Navbar'
 import Sidebar from './components/Sidebar'
 import ProtectedRoute from './components/ProtectedRoute'
 import Login from './pages/Login'
+import ForgotPassword from './pages/ForgotPassword.jsx'
+import ResetPassword from './pages/ResetPassword.jsx'
+import RegisterAdmin from './pages/RegisterAdmin.jsx'
+import RegisterDoctor from './pages/RegisterDoctor.jsx'
 import Unauthorized from './pages/Unauthorized'
 import NotFound from './pages/NotFound.jsx'
 
@@ -23,6 +29,7 @@ const SuperAdminDashboard = lazy(() => import('./pages/superadmin/SuperAdminDash
 const SuperAdminAdmins = lazy(() => import('./pages/superadmin/SuperAdminAdmins'))
 const SuperAdminUsers = lazy(() => import('./pages/superadmin/SuperAdminUsers'))
 const RegisterAdmin = lazy(() => import('./pages/RegisterAdmin'))
+const RegisterDoctor = lazy(() => import('./pages/RegisterDoctor.jsx'))
 const AddDoctor = lazy(() => import('./pages/Admin/AddDoctor'))
 const AddAssistant = lazy(() => import('./pages/Admin/AddAssistant'))
 const StaffProfile = lazy(() => import('./pages/Admin/StaffProfile'))
@@ -89,9 +96,7 @@ function StaffShell({ children }) {
 }
 
 function staffHomePath(role) {
-  if (role === 'assistant') return '/assistant/dashboard'
-  if (role === 'super_admin') return '/superadmin/dashboard'
-  return '/admin/dashboard'
+  return staffDashboardPath(role)
 }
 
 function assistantGuard(aToken, element) {
@@ -113,8 +118,10 @@ function adminGuard(aToken, allowedRoles, element) {
 export default function App() {
   const { dToken, setDToken } = useContext(DoctorContext)
   const { aToken, setAToken } = useContext(AdminContext)
-  const location = useLocation()
-  const navigate = useNavigate()
+  const [bootstrapping, setBootstrapping] = useState(() => !aToken && !dToken)
+
+  const backendUrl =
+    import.meta.env.VITE_BACKEND_URL || API_BASE_URL.replace(/\/api$/, '')
 
   useEffect(() => {
     ;['aToken', 'dToken', 'token'].forEach((key) => {
@@ -134,32 +141,32 @@ export default function App() {
   }, [aToken, dToken, setDToken])
 
   useEffect(() => {
-    const params = new URLSearchParams(location.search)
-    const authToken = params.get('authToken')
-    if (!authToken || authToken.split('.').length !== 3) return
-
-    const payload = decodeJwtPayload(authToken)
-    if (payload?.role === 'doctor') {
-      localStorage.removeItem('aToken')
-      localStorage.setItem('dToken', authToken)
-      setDToken(authToken)
-      navigate('/doctor/dashboard', { replace: true })
-    } else if (['admin', 'super_admin', 'assistant'].includes(payload?.role)) {
-      localStorage.setItem('aToken', authToken)
-      setAToken(authToken)
-      if (payload?.role === 'assistant') {
-        localStorage.setItem('dToken', authToken)
-        setDToken(authToken)
-      } else {
-        localStorage.removeItem('dToken')
-        setDToken('')
-      }
-      navigate(staffHomePath(payload.role), { replace: true })
+    if (aToken || dToken) {
+      setBootstrapping(false)
+      return
     }
-    params.delete('authToken')
-    const qs = params.toString()
-    window.history.replaceState({}, '', location.pathname + (qs ? `?${qs}` : ''))
-  }, [location.search, navigate, setAToken, setDToken])
+
+    let cancelled = false
+    ;(async () => {
+      try {
+        const { data } = await axiosClient.get(`${backendUrl}/api/auth/staff-session`)
+        if (cancelled || !data?.token) return
+        persistStaffToken(data.token, { setAToken, setDToken })
+      } catch {
+        /* no cookie session — show login */
+      } finally {
+        if (!cancelled) setBootstrapping(false)
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [aToken, dToken, backendUrl, setAToken, setDToken])
+
+  if (bootstrapping) {
+    return <StaffPageLoader />
+  }
 
   const showAdmin = Boolean(aToken)
   const showDoctor = Boolean(dToken) && !showAdmin
@@ -420,6 +427,9 @@ export default function App() {
       <Suspense fallback={<StaffPageLoader />}>
       <Routes>
         <Route path="/register-admin" element={<RegisterAdmin />} />
+        <Route path="/register-doctor" element={<RegisterDoctor />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/" element={<Login />} />
         <Route path="/unauthorized" element={<Unauthorized />} />
         <Route path="*" element={<NotFound />} />

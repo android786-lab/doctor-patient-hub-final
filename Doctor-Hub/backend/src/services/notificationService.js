@@ -150,7 +150,56 @@ export async function notifyAppointmentConfirmed({ appointmentId, patientUserId,
   })
 }
 
-export async function notifyFromAppointmentRow(appointmentRow, event) {
+export async function notifyPaymentRejected({
+  appointmentId,
+  patientUserId,
+  reason,
+  slotLabel,
+}) {
+  const user = await loadUserContact(patientUserId)
+  const shortId = String(appointmentId || '').slice(0, 8)
+  const when = slotLabel ? ` (${slotLabel})` : ''
+  const note = reason?.trim() || 'Payment could not be verified'
+  const message = `Your payment for appointment #${shortId}${when} was rejected. Reason: ${note}. Please re-upload payment proof from My Appointments.`
+
+  if (user?.phone) {
+    await sendWhatsApp({
+      toPhone: user.phone,
+      body: `Doctor Hub: ${message}`,
+      userId: user.id,
+      template: 'payment_rejected',
+    })
+  }
+
+  await logNotification({
+    userId: patientUserId || user?.id || null,
+    channel: 'in_app',
+    template: 'payment_rejected',
+    payload: {
+      type: 'payment_rejected',
+      appointment_id: appointmentId,
+      message,
+      read: false,
+    },
+    status: user?.phone ? 'sent' : 'logged',
+  })
+
+  try {
+    await supabase.from('user_notifications').insert({
+      user_id: patientUserId || user?.id,
+      type: 'payment_rejected',
+      message,
+      read: false,
+      appointment_id: appointmentId,
+    })
+  } catch {
+    /* optional table — notifications_log above is the fallback */
+  }
+
+  return { sent: Boolean(user?.phone), message }
+}
+
+export async function notifyFromAppointmentRow(appointmentRow, event, extra = {}) {
   const patientUserId =
     appointmentRow.user_id ||
     appointmentRow.patient_user_id ||
@@ -170,6 +219,17 @@ export async function notifyFromAppointmentRow(appointmentRow, event) {
     return notifyAppointmentConfirmed({
       appointmentId: appointmentRow.id,
       patientUserId,
+      slotLabel,
+    })
+  }
+  if (event === 'payment_rejected') {
+    const slotLabel = [appointmentRow.slot_date, appointmentRow.slot_time]
+      .filter(Boolean)
+      .join(' ')
+    return notifyPaymentRejected({
+      appointmentId: appointmentRow.id,
+      patientUserId,
+      reason: extra.reason,
       slotLabel,
     })
   }

@@ -6,6 +6,7 @@ import {
   authLoginValidators,
   authRegisterValidators,
   authForgotPasswordValidators,
+  authVerifyOtpValidators,
   authResetPasswordValidators,
 } from '../middleware/expressValidators.js'
 import upload from '../../middlewares/multer.js'
@@ -14,9 +15,11 @@ import {
   login,
   logout,
   forgotPassword,
+  verifyOtp,
   resetPassword,
   validateResetToken,
   getMe,
+  staffSession,
   updateMyProfile,
 } from '../controllers/authController.js'
 import {
@@ -27,6 +30,7 @@ import {
 const router = Router()
 
 router.get('/me', authMiddleware, getMe)
+router.get('/staff-session', authMiddleware, staffSession)
 router.patch('/profile', upload.single('image'), authMiddleware, updateMyProfile)
 router.post('/profile', upload.single('image'), authMiddleware, updateMyProfile)
 router.post('/register', authRateLimiter, authRegisterValidators, register)
@@ -35,6 +39,7 @@ router.get('/admin-registration/status', getAdminRegistrationStatus)
 router.post('/login', authRateLimiter, authLoginValidators, login)
 router.post('/logout', logout)
 router.post('/forgot-password', authRateLimiter, authForgotPasswordValidators, forgotPassword)
+router.post('/verify-otp', authRateLimiter, authVerifyOtpValidators, verifyOtp)
 router.post('/reset-password', authRateLimiter, authResetPasswordValidators, resetPassword)
 router.get('/reset-password/validate', validateResetToken)
 

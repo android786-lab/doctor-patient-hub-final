@@ -8,8 +8,8 @@ Copy new env vars from `backend/.env.example` into `backend/.env`.
 
 ## Phase 1 — Forgot password
 
-- **API:** `POST /api/auth/forgot-password`, `POST /api/auth/reset-password`, `GET /api/auth/reset-password/validate?token=`
-- **UI:** `/auth/forgot-password`, `/auth/reset-password?token=...`
+- **API:** `POST /api/auth/forgot-password` (sends 6-digit OTP, 10 min), `POST /api/auth/verify-otp`, `POST /api/auth/reset-password`, `GET /api/auth/reset-password/validate?reset_token=`
+- **UI:** `/auth/forgot-password` (email → OTP), `/auth/reset-password` (new password after OTP)
 - **SMTP:** set `SMTP_HOST`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`. Without SMTP, dev mode logs the reset URL in the backend console.
 
 ## Phase 2 — Patient lab/report upload

@@ -4,65 +4,39 @@ import {
   authErrorMessage,
 } from './token.js'
 
+const STAFF_ROLES = new Set(['admin', 'super_admin', 'assistant'])
+
 const authAdmin = async (req, res, next) => {
   const atoken = getBearerOrHeaderToken(req, 'atoken')
   const unified = getBearerOrHeaderToken(req, 'token')
+  const token = unified || atoken
 
-  if (unified) {
-    try {
-      const decoded = verifyJwt(unified)
-      if (decoded?.role && ['admin', 'super_admin', 'assistant'].includes(decoded.role)) {
-        req.user = { id: decoded.id, email: decoded.email, role: decoded.role }
-        return next()
-      }
-    } catch {
-      /* fall through to legacy admin token */
-    }
-  }
-
-  if (!atoken) {
+  if (!token) {
     return res.status(401).json({ success: false, message: 'Not Authorized Login Again' })
   }
 
   try {
-    const token_decode = verifyJwt(atoken)
+    const decoded = verifyJwt(token)
 
-    if (typeof token_decode === 'object' && token_decode?.role) {
-      if (['admin', 'super_admin', 'assistant'].includes(token_decode.role)) {
-        req.user = {
-          id: token_decode.id,
-          email: token_decode.email,
-          role: token_decode.role,
-        }
-        return next()
-      }
+    if (!decoded?.id || typeof decoded !== 'object') {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid token — please login again',
+        code: 'AUTH_INVALID',
+      })
     }
 
-    const superExpected =
-      process.env.SUPER_ADMIN_EMAIL && process.env.SUPER_ADMIN_PASSWORD
-        ? `${process.env.SUPER_ADMIN_EMAIL}${process.env.SUPER_ADMIN_PASSWORD}`
-        : null
-    const adminExpected = `${process.env.ADMIN_EMAIL}${process.env.ADMIN_PASSWORD}`
-
-    if (superExpected && token_decode === superExpected) {
-      req.user = {
-        id: 'env-super-admin',
-        email: process.env.SUPER_ADMIN_EMAIL,
-        role: 'super_admin',
-      }
-      return next()
+    const role = decoded.role
+    if (!STAFF_ROLES.has(role)) {
+      return res.status(403).json({ success: false, message: 'Access denied' })
     }
 
-    if (token_decode === adminExpected) {
-      req.user = { id: 'env-admin', email: process.env.ADMIN_EMAIL, role: 'admin' }
-      return next()
+    req.user = {
+      id: decoded.id,
+      email: decoded.email,
+      role,
     }
-
-    return res.status(401).json({
-      success: false,
-      message: 'Not Authorized Login Again',
-      code: 'AUTH_INVALID',
-    })
+    return next()
   } catch (error) {
     return res.status(401).json({
       success: false,

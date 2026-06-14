@@ -219,17 +219,38 @@ export async function rejectAppointmentById(appointmentId, reason = '') {
   const rejectedAt = new Date().toISOString()
 
   const attempts = [
-    { status: 'rejected', payment_reference: note, verified_at: rejectedAt },
-    { status: 'cancelled', cancelled: true, payment_reference: note },
-    { cancelled: true, payment_reference: note },
+    {
+      status: 'pending_payment',
+      cancelled: false,
+      payment: false,
+      payment_proof_url: null,
+      proof_url: null,
+      payment_reference: note,
+      verified_at: null,
+    },
+    {
+      status: 'pending_payment',
+      cancelled: false,
+      payment: false,
+      payment_proof_url: null,
+      payment_reference: note,
+    },
+    {
+      status: 'pending_payment',
+      cancelled: false,
+      payment_proof_url: null,
+    },
   ]
 
   let data = null
   let lastError = null
   for (const patch of attempts) {
+    const cleaned = Object.fromEntries(
+      Object.entries(patch).filter(([, v]) => v !== undefined)
+    )
     const { data: updated, error } = await supabase
       .from('appointments')
-      .update(patch)
+      .update(cleaned)
       .eq('id', appointmentId)
       .select()
       .single()
@@ -242,7 +263,11 @@ export async function rejectAppointmentById(appointmentId, reason = '') {
   }
   if (!data) throw lastError || new Error('Could not reject appointment')
 
-  const paymentPatches = [{ status: 'rejected', reference: note }, { status: 'rejected' }]
+  const paymentPatches = [
+    { status: 'rejected', reference: note, verified_at: rejectedAt },
+    { status: 'rejected', reference: note },
+    { status: 'rejected' },
+  ]
   for (const patch of paymentPatches) {
     const { error } = await supabase
       .from('payments')
@@ -250,6 +275,13 @@ export async function rejectAppointmentById(appointmentId, reason = '') {
       .eq('appointment_id', appointmentId)
     if (!error) break
     if (!isMissingColumn(error) && !/relation.*does not exist/i.test(error.message || '')) break
+  }
+
+  try {
+    const { notifyFromAppointmentRow } = await import('../services/notificationService.js')
+    await notifyFromAppointmentRow(data, 'payment_rejected', { reason: note })
+  } catch (notifyErr) {
+    console.warn('Payment rejected notification skipped:', notifyErr.message)
   }
 
   return data

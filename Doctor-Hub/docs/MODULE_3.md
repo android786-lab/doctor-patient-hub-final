@@ -28,7 +28,7 @@ If you use **`profiles`** + Supabase Auth (`001_initial_schema.sql`) only, run `
 ## Frontend
 
 - `AuthContext`: `login`, `register`, `logout`, JWT from `localStorage`
-- Staff roles redirect to **admin app** (`VITE_ADMIN_URL`, default `http://localhost:5174`) with `authToken` query param
+- Staff roles redirect to **admin app** (`VITE_ADMIN_URL`, default `http://localhost:5174`) without tokens in the URL; the staff portal restores the session from the httpOnly login cookie via `GET /api/auth/staff-session` and stores JWT in `localStorage` (`aToken` / `dToken`).
 
 ## Test
 

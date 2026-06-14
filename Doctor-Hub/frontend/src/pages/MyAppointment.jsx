@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import { AppContext } from '../context/AppContext'
 import DoctorPhoto from '@doctor-hub/ui/DoctorPhoto.jsx'
+import PaymentOptionsPanel from '../components/patient/PaymentOptionsPanel.jsx'
 import { getAppointmentStatus } from '../utils/appointmentStatus'
 import { ROUTES } from '../utils/constants.js'
 
@@ -52,14 +53,19 @@ function AppointmentCardSkeleton() {
   return <div className="h-[4.5rem] animate-pulse rounded-xl bg-slate-200" />
 }
 
-function AppointmentCard({ item, formatMoney, onCancel }) {
+function AppointmentCard({ item, formatMoney, onCancel, token, backendUrl, onPaymentSubmitted }) {
   const st = getAppointmentStatus(item)
   const doc = item.doc_data || {}
   const doctorName = formatPersonName(doc.name)
   const specialty = doc.speciality || doc.specialization || 'General physician'
   const addressLine = formatAddress(doc.address)
   const fee = Number(item.amount ?? doc.fees ?? 0)
-  const incompleteBooking = item.status === 'pending_payment' && !item.payment_proof_url
+  const needsPaymentUpload =
+    item.status === 'pending_payment' && !item.payment_proof_url && !item.cancelled
+  const rejectedPayment =
+    needsPaymentUpload && Boolean(item.payment_reference)
+  const incompleteBooking = needsPaymentUpload && !rejectedPayment
+  const [showPayment, setShowPayment] = useState(false)
   const when = `${formatSlotDate(item.slot_date)}${item.slot_time ? ` · ${item.slot_time}` : ''}`
   const reason = item.symptoms || item.disease_query
   const metaParts = [
@@ -70,6 +76,7 @@ function AppointmentCard({ item, formatMoney, onCancel }) {
   ].filter(Boolean)
 
   const hasActions =
+    needsPaymentUpload ||
     incompleteBooking ||
     (item.status === 'confirmed' && !item.is_completed) ||
     (!item.cancelled && !item.is_completed && item.status !== 'payment_uploaded')
@@ -98,7 +105,17 @@ function AppointmentCard({ item, formatMoney, onCancel }) {
         </div>
 
         {hasActions ? (
-          <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-2.5 sm:shrink-0 sm:border-0 sm:pt-0">
+          <div className="flex flex-col gap-2 border-t border-slate-100 pt-2.5 sm:shrink-0 sm:border-0 sm:pt-0">
+            <div className="flex flex-wrap items-center gap-2">
+            {rejectedPayment && (
+              <button
+                type="button"
+                onClick={() => setShowPayment((v) => !v)}
+                className="rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-800 hover:bg-red-100"
+              >
+                {showPayment ? 'Hide payment form' : 'Re-upload payment proof'}
+              </button>
+            )}
             {incompleteBooking && (
               <Link
                 to={ROUTES.FIND_DOCTORS}
@@ -128,6 +145,21 @@ function AppointmentCard({ item, formatMoney, onCancel }) {
                 Cancel
               </button>
             )}
+            </div>
+            {showPayment && rejectedPayment ? (
+              <PaymentOptionsPanel
+                appointmentId={item.id}
+                fee={fee}
+                formatMoney={formatMoney}
+                backendUrl={backendUrl}
+                token={token}
+                onClose={() => setShowPayment(false)}
+                onSubmitted={() => {
+                  setShowPayment(false)
+                  onPaymentSubmitted?.()
+                }}
+              />
+            ) : null}
           </div>
         ) : null}
       </div>
@@ -149,11 +181,8 @@ export default function MyAppointments() {
           headers: { token, Authorization: `Bearer ${token}` },
         })
         data = res.data
-      } catch {
-        const res = await axios.get(`${backendUrl}/api/user/appointments`, {
-          headers: { token },
-        })
-        data = res.data
+      } catch (err) {
+        throw err
       }
       if (!data?.success && data?.message) {
         toast.error(data.message)
@@ -172,9 +201,9 @@ export default function MyAppointments() {
   const cancelAppointment = async (appointmentId) => {
     try {
       const { data } = await axios.post(
-        `${backendUrl}/api/user/cancel-appointment`,
+        `${backendUrl}/api/appointments/cancel`,
         { appointmentId },
-        { headers: { token } }
+        { headers: { token, Authorization: `Bearer ${token}` } }
       )
       if (data.success) {
         toast.success(data.message)
@@ -237,6 +266,9 @@ export default function MyAppointments() {
               item={item}
               formatMoney={formatMoney}
               onCancel={cancelAppointment}
+              token={token}
+              backendUrl={backendUrl}
+              onPaymentSubmitted={getUserAppointments}
             />
           ))
         )}

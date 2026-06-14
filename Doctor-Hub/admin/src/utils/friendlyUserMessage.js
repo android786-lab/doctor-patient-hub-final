@@ -9,6 +9,9 @@ export function friendlyUserMessage(
   if (/invalid signature|jwt malformed|jwt expired|not authorized/i.test(message)) {
     return 'Session expired — please sign in again'
   }
+  if (/535|badcredentials|invalid login|smtp|gsmtp/i.test(message)) {
+    return 'We could not send the reset email. Please try again later or contact the hospital help desk.'
+  }
   if (TECHNICAL_HINT.test(message)) return fallback
   return message
 }

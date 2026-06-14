@@ -27,6 +27,8 @@ import {
   rejectAdminRequest,
 } from '../controllers/adminRegistrationController.js'
 import { postCatalogEntry } from '../controllers/doctorCatalogController.js'
+import { changeAvailability } from '../../controllers/doctorController.js'
+import { appointmentCancel } from '../../controllers/adminController.js'
 
 const router = Router()
 
@@ -84,6 +86,18 @@ router.get(
   authAdmin,
   requireRoles('admin', 'super_admin'),
   getAdminAnalyticsHandler
+)
+router.post(
+  '/doctors/change-availability',
+  authAdmin,
+  requireRoles('admin', 'super_admin'),
+  changeAvailability
+)
+router.post(
+  '/appointments/cancel',
+  authAdmin,
+  requireRoles('admin', 'super_admin'),
+  appointmentCancel
 )
 router.patch(
   '/users/:id/deactivate',

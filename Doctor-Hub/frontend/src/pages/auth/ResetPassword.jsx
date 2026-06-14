@@ -1,12 +1,17 @@
 import { useEffect, useState } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import api from '../../services/api.js'
 import { AuthShell } from '../../components/auth/AuthShell.jsx'
 
 export default function ResetPassword() {
   const [searchParams] = useSearchParams()
+  const location = useLocation()
   const navigate = useNavigate()
-  const token = searchParams.get('token') || ''
+  const token =
+    searchParams.get('token') ||
+    searchParams.get('reset_token') ||
+    location.state?.resetToken ||
+    ''
 
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -25,13 +30,13 @@ export default function ResetPassword() {
     const check = async () => {
       try {
         const { data } = await api.get('/auth/reset-password/validate', {
-          params: { token },
+          params: { reset_token: token },
         })
         setTokenValid(Boolean(data?.valid))
-        if (!data?.valid) setError(data?.message || 'Invalid or expired link')
+        if (!data?.valid) setError(data?.message || 'Invalid or expired reset session')
       } catch (e) {
         setTokenValid(false)
-        setError(e.response?.data?.message || 'Could not validate reset link')
+        setError(e.response?.data?.message || 'Could not validate reset session')
       } finally {
         setChecking(false)
       }
@@ -53,7 +58,7 @@ export default function ResetPassword() {
     setLoading(true)
     try {
       const { data } = await api.post('/auth/reset-password', {
-        token,
+        reset_token: token,
         password,
         confirm_password: confirmPassword,
       })
@@ -73,7 +78,7 @@ export default function ResetPassword() {
       <h2 className="font-display text-2xl font-semibold text-slate-900">Reset password</h2>
 
       {checking ? (
-        <p className="mt-6 text-sm text-slate-500">Validating your link…</p>
+        <p className="mt-6 text-sm text-slate-500">Validating your session…</p>
       ) : done ? (
         <p className="mt-6 rounded-lg border border-teal-200 bg-teal-50 px-4 py-3 text-sm text-teal-800">
           Password updated. Redirecting to sign in…
@@ -81,10 +86,10 @@ export default function ResetPassword() {
       ) : !tokenValid ? (
         <div className="mt-6 space-y-4">
           <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-            {error || 'This reset link is invalid or has expired.'}
+            {error || 'This reset session is invalid or has expired.'}
           </p>
           <Link to="/auth/forgot-password" className="text-sm font-semibold text-teal-700 hover:underline">
-            Request a new link
+            Request a new code
           </Link>
         </div>
       ) : (

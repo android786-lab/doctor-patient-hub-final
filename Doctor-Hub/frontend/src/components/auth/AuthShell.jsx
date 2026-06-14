@@ -50,10 +50,17 @@ export function AuthLinks() {
     <p className="mt-6 text-center text-xs text-slate-400">
       Hospital staff?{' '}
       <a
-        href={import.meta.env.VITE_ADMIN_URL}
+        href={import.meta.env.VITE_ADMIN_URL || 'http://localhost:5174'}
         className="font-medium text-teal-700 hover:underline"
       >
         Staff portal
+      </a>
+      {' · '}
+      <a
+        href={`${import.meta.env.VITE_ADMIN_URL || 'http://localhost:5174'}/register-doctor`}
+        className="font-medium text-teal-700 hover:underline"
+      >
+        Doctor registration
       </a>
     </p>
   )

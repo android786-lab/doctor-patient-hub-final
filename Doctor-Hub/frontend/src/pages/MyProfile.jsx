@@ -64,7 +64,7 @@ export default function MyProfile() {
       formData.append('dob', userData.dob || 'Not Selected')
       if (imageFile) formData.append('image', imageFile)
 
-      const { data } = await axios.post(`${backendUrl}/api/user/update-profile`, formData, {
+      const { data } = await axios.patch(`${backendUrl}/api/auth/profile`, formData, {
         headers: { token },
       })
 

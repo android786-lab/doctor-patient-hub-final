@@ -97,7 +97,7 @@ export function AuthProvider({ children }) {
       try {
         ;({ data } = await api.get('/patients/profile'))
       } catch {
-        ;({ data } = await api.get('/user/get-profile', { headers: { token } }))
+        ;({ data } = await api.get('/auth/me'))
       }
       if (data?.success && data.userData) {
         setUser((prev) => ({

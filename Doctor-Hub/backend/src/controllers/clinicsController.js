@@ -2,7 +2,9 @@ import {
   fetchClinicsForDoctor,
   createClinicForDoctor,
   updateClinicForDoctor,
+  createScheduleForClinic,
 } from '../utils/clinicRows.js'
+import { resolveDoctorContextIdsOrCreate } from '../utils/appointmentDoctorRows.js'
 
 export async function listMyClinics(req, res) {
   try {
@@ -16,10 +18,11 @@ export async function listMyClinics(req, res) {
 
 export async function createClinic(req, res) {
   try {
-    const { name, address, city, phone, timings } = req.body
+    const { name, address, city, phone, timings, doctor_id } = req.body
+    const { doctorRowId } = await resolveDoctorContextIdsOrCreate(req.user?.id)
 
-    if (!name?.trim()) {
-      return res.status(400).json({ message: 'Clinic name is required' })
+    if (doctor_id !== doctorRowId) {
+      return res.status(403).json({ message: 'doctor_id does not match authenticated doctor' })
     }
 
     const clinic = await createClinicForDoctor(req.user?.id, {
@@ -34,6 +37,29 @@ export async function createClinic(req, res) {
   } catch (err) {
     console.error('createClinic:', err)
     return res.status(500).json({ message: err.message || 'Failed to create clinic' })
+  }
+}
+
+export async function createClinicSchedule(req, res) {
+  try {
+    const { id: clinicId } = req.params
+    const { day_of_week, start_time, end_time, slot_duration_minutes } = req.body
+
+    const result = await createScheduleForClinic(req.user?.id, clinicId, {
+      day_of_week,
+      start_time,
+      end_time,
+      slot_duration_minutes,
+    })
+
+    if (!result.ok) {
+      return res.status(result.status || 400).json({ message: result.message || 'Could not create schedule' })
+    }
+
+    return res.status(201).json({ message: 'Schedule created', schedule: result.schedule })
+  } catch (err) {
+    console.error('createClinicSchedule:', err)
+    return res.status(500).json({ message: err.message || 'Failed to create schedule' })
   }
 }
 

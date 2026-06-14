@@ -1,3 +1,4 @@
+// DEPRECATED — use /api/auth/* and /api/doctor/* (doctorPortal) instead.
 import express from 'express';
 import { loginDoctor, appointmentsDoctor, appointmentCancel, doctorList,  appointmentComplete, doctorDashboard, doctorProfile, updateDoctorProfile, changeAvailability } from '../controllers/doctorController.js';
 import { getMySchedule, saveMySchedule } from '../src/controllers/scheduleController.js';

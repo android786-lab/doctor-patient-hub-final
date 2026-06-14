@@ -55,7 +55,7 @@ export default function Doctors() {
         if (treatment) params.set('treatment', treatment)
         if (disease) params.set('disease', disease)
         if (speciality) params.set('speciality', speciality)
-        const { data } = await axios.get(`${backendUrl}/api/doctor/list?${params.toString()}`)
+        const { data } = await axios.get(`${backendUrl}/api/doctors/legacy/list?${params.toString()}`)
         if (data.success) setDoctors(data.doctors ?? [])
         else setDoctors([])
       } catch (e) {

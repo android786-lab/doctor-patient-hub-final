@@ -90,7 +90,7 @@ export default function PaymentOptionsPanel({
         })
         data = res.data
       } catch {
-        const res = await axios.post(`${backendUrl}/api/user/payment-manual`, form, {
+        const res = await axios.post(`${backendUrl}/api/payments/manual`, form, {
           headers: { token, 'Content-Type': 'multipart/form-data' },
           timeout: 90000,
         })

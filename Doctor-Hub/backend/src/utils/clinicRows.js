@@ -184,3 +184,52 @@ export async function updateClinicForDoctor(contextUserId, clinicId, fields) {
 
   throw lastError || new Error('Could not update clinic')
 }
+
+const DAY_NAME_TO_DOW = {
+  Sunday: 0,
+  Monday: 1,
+  Tuesday: 2,
+  Wednesday: 3,
+  Thursday: 4,
+  Friday: 5,
+  Saturday: 6,
+}
+
+function toScheduleTime(hhmm) {
+  const [h, m] = String(hhmm).split(':')
+  return `${String(h).padStart(2, '0')}:${String(m || '0').padStart(2, '0')}:00`
+}
+
+export async function createScheduleForClinic(
+  contextUserId,
+  clinicId,
+  { day_of_week, start_time, end_time, slot_duration_minutes }
+) {
+  const { doctorRowId } = await resolveDoctorContextIdsOrCreate(contextUserId)
+  if (!doctorRowId) throw new Error('Doctor profile not found')
+
+  const { owned } = await clinicOwnedByDoctor(clinicId, doctorRowId)
+  if (!owned) return { ok: false, status: 403, message: 'Access denied' }
+
+  const dayIndex = DAY_NAME_TO_DOW[day_of_week]
+  if (dayIndex === undefined) {
+    return { ok: false, status: 400, message: 'Invalid day_of_week' }
+  }
+
+  const { data, error } = await supabase
+    .from('schedules')
+    .insert({
+      doctor_id: doctorRowId,
+      clinic_id: clinicId,
+      day_of_week: dayIndex,
+      start_time: toScheduleTime(start_time),
+      end_time: toScheduleTime(end_time),
+      slot_duration_minutes,
+      is_active: true,
+    })
+    .select('*')
+    .single()
+
+  if (error) throw error
+  return { ok: true, schedule: data }
+}

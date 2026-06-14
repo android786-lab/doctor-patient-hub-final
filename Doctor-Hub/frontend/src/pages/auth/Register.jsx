@@ -4,6 +4,10 @@ import useAuth from '../../hooks/useAuth.js'
 import { ROLES } from '../../utils/constants.js'
 import { AuthShell, AuthLinks } from '../../components/auth/AuthShell.jsx'
 
+const STAFF_REGISTER_DOCTOR_URL = `${
+  import.meta.env.VITE_ADMIN_URL || 'http://localhost:5174'
+}/register-doctor`
+
 export default function Register() {
   const { token, isLoading, register } = useAuth()
   const navigate = useNavigate()
@@ -12,7 +16,6 @@ export default function Register() {
   const [phone, setPhone] = useState('')
   const [password, setPassword] = useState('')
   const [confirm_password, setConfirmPassword] = useState('')
-  const [role, setRole] = useState(ROLES.PATIENT)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -35,7 +38,13 @@ export default function Register() {
 
     setLoading(true)
     try {
-      await register({ full_name, email, password, role, phone })
+      await register({
+        full_name,
+        email,
+        password,
+        role: ROLES.PATIENT,
+        phone,
+      })
       navigate('/auth/login', {
         state: { message: 'Registered successfully. Please sign in.' },
       })
@@ -47,7 +56,7 @@ export default function Register() {
   }
 
   return (
-    <AuthShell title="Join Doctor Hub" subtitle="Register as a patient or doctor.">
+    <AuthShell title="Join Doctor Hub" subtitle="Create your patient account to book visits and manage care.">
       <h2 className="font-display text-2xl font-semibold text-slate-900">Create account</h2>
 
       {error && (
@@ -79,15 +88,6 @@ export default function Register() {
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
         />
-        <select
-          required
-          className="dh-input"
-          value={role}
-          onChange={(e) => setRole(e.target.value)}
-        >
-          <option value={ROLES.PATIENT}>Patient</option>
-          <option value={ROLES.DOCTOR}>Doctor</option>
-        </select>
         <input
           required
           type="password"
@@ -107,9 +107,15 @@ export default function Register() {
           onChange={(e) => setConfirmPassword(e.target.value)}
         />
         <button type="submit" disabled={loading} className="dh-btn w-full">
-          {loading ? 'Please wait…' : 'Register'}
+          {loading ? 'Please wait…' : 'Register as patient'}
         </button>
       </form>
+      <p className="mt-4 text-center text-sm text-slate-600">
+        Are you a doctor?{' '}
+        <a href={STAFF_REGISTER_DOCTOR_URL} className="font-medium text-teal-700 hover:underline">
+          Register on the staff portal
+        </a>
+      </p>
       <p className="mt-6 text-center text-sm text-slate-600">
         Already have an account?{' '}
         <Link to="/auth/login" className="font-medium text-teal-700">

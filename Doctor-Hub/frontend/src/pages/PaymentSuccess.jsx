@@ -23,7 +23,7 @@ const PaymentSuccess = () => {
     const verify = async () => {
       try {
         const { data } = await axios.post(
-          backendUrl + '/api/user/verifySTRIPE',
+          backendUrl + '/api/payments/verify',
           { session_id: sessionId },
           { headers: { token } }
         )

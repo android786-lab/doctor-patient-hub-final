@@ -99,8 +99,8 @@ export default function AddDoctor() {
       formData.append('treatmentType', treatmentType)
       formData.append('diseases', diseases)
 
-      const { data } = await axiosClient.post(`${backendUrl}/api/admin/add-doctor`, formData, {
-        headers: { atoken: aToken },
+      const { data } = await axiosClient.post(`${backendUrl}/api/doctors`, formData, {
+        headers: { atoken: aToken, token: aToken },
       })
 
       if (data.success) {

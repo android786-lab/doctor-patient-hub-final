@@ -3,6 +3,7 @@ import supabase from '../config/supabase.js'
 
 const TOKEN_BYTES = 32
 const EXPIRY_HOURS = 1
+const POST_OTP_RESET_MINUTES = 15
 
 function hashToken(token) {
   return crypto.createHash('sha256').update(token).digest('hex')
@@ -13,9 +14,10 @@ export function generateResetToken() {
   return { token, tokenHash: hashToken(token) }
 }
 
-export async function createPasswordResetToken(userId) {
+export async function createPasswordResetToken(userId, { expiryMinutes } = {}) {
   const { token, tokenHash } = generateResetToken()
-  const expiresAt = new Date(Date.now() + EXPIRY_HOURS * 60 * 60 * 1000).toISOString()
+  const minutes = expiryMinutes ?? EXPIRY_HOURS * 60
+  const expiresAt = new Date(Date.now() + minutes * 60 * 1000).toISOString()
 
   await supabase
     .from('password_reset_tokens')
@@ -50,6 +52,8 @@ export async function findValidResetToken(plainToken) {
   if (error) throw error
   return data
 }
+
+export { POST_OTP_RESET_MINUTES }
 
 export async function markResetTokenUsed(id) {
   const { error } = await supabase

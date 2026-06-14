@@ -35,7 +35,7 @@ async function patchAppointment(appointmentId, patches) {
   if (lastError) throw lastError
 }
 
-async function upsertPaymentRecord(appointmentId, { amount, method, proofUrl, reference }) {
+async function upsertPaymentRecord(appointmentId, { amount, method, proofUrl, reference, reupload = false }) {
   const row = {
     appointment_id: appointmentId,
     amount: amount || 0,
@@ -44,6 +44,43 @@ async function upsertPaymentRecord(appointmentId, { amount, method, proofUrl, re
     method,
     proof_url: proofUrl,
     reference: reference || null,
+  }
+
+  const { data: existing } = await supabase
+    .from('payments')
+    .select('id, status')
+    .eq('appointment_id', appointmentId)
+    .maybeSingle()
+
+  if (existing?.id) {
+    if (reupload || existing.status === 'rejected' || existing.status === 'failed') {
+      const { error: updateErr } = await supabase
+        .from('payments')
+        .update({
+          amount: row.amount,
+          method,
+          proof_url: proofUrl,
+          reference: reference || null,
+          status: 'pending',
+          verified_at: null,
+        })
+        .eq('appointment_id', appointmentId)
+      if (!updateErr) return
+      if (!isMissingColumn(updateErr)) throw updateErr
+    } else if (existing.status === 'pending' || existing.status === 'succeeded' || existing.status === 'verified') {
+      const { error: updateErr } = await supabase
+        .from('payments')
+        .update({
+          amount: row.amount,
+          method,
+          proof_url: proofUrl,
+          reference: reference || null,
+          status: 'pending',
+        })
+        .eq('appointment_id', appointmentId)
+      if (!updateErr) return
+      if (!isMissingColumn(updateErr)) throw updateErr
+    }
   }
 
   const { error: insertErr } = await supabase.from('payments').insert(row)
@@ -58,6 +95,7 @@ async function upsertPaymentRecord(appointmentId, { amount, method, proofUrl, re
         proof_url: proofUrl,
         reference: reference || null,
         status: 'pending',
+        verified_at: null,
       })
       .eq('appointment_id', appointmentId)
     if (!updateErr) return
@@ -67,6 +105,31 @@ async function upsertPaymentRecord(appointmentId, { amount, method, proofUrl, re
   if (!/relation.*does not exist|column/i.test(insertErr.message || '')) {
     if (!isMissingColumn(insertErr)) throw insertErr
   }
+}
+
+async function loadPaymentForAppointment(appointmentId) {
+  const { data, error } = await supabase
+    .from('payments')
+    .select('id, status')
+    .eq('appointment_id', appointmentId)
+    .maybeSingle()
+  if (error && !isMissingColumn(error) && !/relation.*does not exist/i.test(error.message || '')) {
+    throw error
+  }
+  return data || null
+}
+
+function paymentWasRejected(appointment, paymentRow) {
+  if (paymentRow?.status === 'rejected' || paymentRow?.status === 'failed') return true
+  if (appointment.status === 'rejected' || appointment.status === 'payment_rejected') return true
+  if (
+    appointment.status === 'pending_payment' &&
+    appointment.payment_reference &&
+    !appointment.payment_proof_url
+  ) {
+    return true
+  }
+  return false
 }
 
 export async function submitManualPaymentProof({
@@ -94,12 +157,22 @@ export async function submitManualPaymentProof({
   if (!(await appointmentOwnedByUser(appointment, userId))) {
     throw new Error('Unauthorized')
   }
-  if (
-    appointment.payment_proof_url ||
-    appointment.status === 'awaiting_verification' ||
-    appointment.status === 'payment_uploaded'
-  ) {
+
+  const existingPayment = await loadPaymentForAppointment(appointmentId)
+  const rejected = paymentWasRejected(appointment, existingPayment)
+
+  const proofAlreadyPending =
+    !rejected &&
+    (appointment.payment_proof_url ||
+      appointment.status === 'awaiting_verification' ||
+      appointment.status === 'payment_uploaded')
+
+  if (proofAlreadyPending) {
     throw new Error('Payment proof already submitted — waiting for admin approval')
+  }
+
+  if (!rejected && appointment.status !== 'pending_payment' && !existingPayment) {
+    throw new Error('This appointment is not awaiting payment')
   }
 
   const proofUrl = await uploadProofImage(imageFile)
@@ -133,6 +206,7 @@ export async function submitManualPaymentProof({
         method,
         proofUrl,
         reference,
+        reupload: rejected,
       })
     } catch (e) {
       console.warn('payments table update skipped:', e.message)
@@ -151,7 +225,9 @@ export async function submitManualPaymentProof({
 
   return {
     success: true,
-    message: 'Payment proof submitted — our team will verify and confirm your appointment',
+    message: rejected
+      ? 'New payment proof submitted — our team will verify again'
+      : 'Payment proof submitted — our team will verify and confirm your appointment',
     proofUrl,
   }
 }

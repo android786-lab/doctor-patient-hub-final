@@ -1,3 +1,4 @@
+// DEPRECATED — use /api/auth/*, /api/admin/* (adminPortal), and /api/doctors/* instead.
 import express from 'express'
 import { addDoctor, adminDashboard, allDoctors, appointmentCancel, appointmentsAdmin, loginAdmin} from '../controllers/adminController.js'
 import upload from '../middlewares/multer.js'

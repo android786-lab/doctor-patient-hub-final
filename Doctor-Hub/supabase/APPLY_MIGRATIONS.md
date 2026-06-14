@@ -30,6 +30,14 @@ Run if aligning with semester Module 1 prompt fields:
 
 ---
 
+## 029 — OTP password reset
+
+Required for 6-digit email OTP reset (replaces email-link flow):
+
+1. SQL Editor → `supabase/029_password_reset_otp.sql`
+
+---
+
 ## 020 — Password reset, patient report attachments, prescription PDF
 
 Required for forgot-password, lab report uploads, and e-prescription PDF:
@@ -116,8 +124,23 @@ Pehle se na chali hon to number order mein SQL Editor mein run karein:
 
 | `018_super_admin_bootstrap.sql` | Optional: promote super admin (commented SQL) |
 | **`020_password_reset_and_reports.sql`** | **Password reset + report attachments** |
+| `024_medical_history_columns.sql` | Extra history columns |
+| `025_doctors_available_compat.sql` | Doctor availability compat |
+| `026_appointment_early_end.sql` | Early appointment end metadata |
+| **`027_immutability_triggers.sql`** | **DB triggers: no delete history / no edit Rx** |
+| `028_user_notifications.sql` | In-app notifications (payment rejected) |
 
 
 
 `008_fix_table_grants.sql` aur `migrations/002_api_grants.sql` grants ke liye useful hain agar tables "schema cache" error dein.
+
+---
+
+## 027 — Immutability triggers (required for submission / rubric)
+
+Medical records API par 403 deta hai; yeh migration **database level** par bhi block karti hai.
+
+1. SQL Editor → `supabase/migrations/027_immutability_triggers.sql` (or `supabase/027_immutability_triggers.sql` — same content)
+2. Pehle `007_medical_history_module.sql` chal chuka hona chahiye
+3. Test (optional): kisi row par `DELETE FROM medical_history ...` try karo — error aana chahiye
 

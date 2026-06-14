@@ -53,7 +53,7 @@ const DoctorContextProvider = (props) => {
   const completeAppointment = async (appointmentId) => {
     try {
       const { data } = await axiosClient.post(
-        backendUrl + '/api/doctor/complete-appointment',
+        backendUrl + '/api/doctors/appointments/complete',
         { appointmentId },
         headers()
       )
@@ -70,7 +70,7 @@ const DoctorContextProvider = (props) => {
   const cancelAppointment = async (appointmentId) => {
     try {
       const { data } = await axiosClient.post(
-        backendUrl + '/api/doctor/cancel-appointment',
+        backendUrl + '/api/doctors/appointments/cancel',
         { appointmentId },
         headers()
       )

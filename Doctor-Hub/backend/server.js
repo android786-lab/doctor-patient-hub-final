@@ -16,15 +16,21 @@ import connectCloudinary from './config/cloudinary.js'
 
 import healthRouter from './routes/healthRoute.js'
 
-import adminRouter from './routes/adminRoute.js'
+// DEPRECATED — use /api/auth/* and /api/admin/* (adminPortal) instead
+// import adminRouter from './routes/adminRoute.js'
 
-import doctorRouter from './routes/doctorRoute.js'
+// DEPRECATED — use /api/doctor/* (doctorPortal) and /api/doctors/* instead
+// import doctorRouter from './routes/doctorRoute.js'
 
-import userRouter from './routes/userRoute.js'
+// DEPRECATED — use /api/auth/*, /api/patient/*, /api/appointments/*, /api/payments/* instead
+// import userRouter from './routes/userRoute.js'
 
 import aiRouter from './routes/aiRoute.js'
 
-import assistantRouter from './routes/assistantRoute.js'
+// DEPRECATED — use /api/assistant/* (assistantPortal) instead
+// import assistantRouter from './routes/assistantRoute.js'
+
+import doctorPortalRoutes from './src/routes/doctorPortal.js'
 
 
 
@@ -119,7 +125,7 @@ app.use('/health', healthRouter)
 
 
 
-/** Module 1 doc-aligned API (keeps legacy routes below) */
+/** Module 1 doc-aligned API */
 
 app.use('/api/auth', authRoutes)
 
@@ -142,17 +148,24 @@ app.use('/api/superadmin', superAdminPortalRoutes)
 app.use('/api/assistant', assistantPortalRoutes)
 app.use('/api/patient', patientPortalRoutes)
 
-/** Legacy routes — still used by working UI */
+/** Doctor portal (module routes — replaces legacy /api/doctor router) */
+app.use('/api/doctor', doctorPortalRoutes)
 
-app.use('/api/admin', adminRouter)
+/** Legacy routes — disabled; use unified /api/auth/* login and portal routes above */
 
-app.use('/api/doctor', doctorRouter)
+// DEPRECATED — use /api/auth/* instead
+// app.use('/api/admin', adminRouter)
 
-app.use('/api/user', userRouter)
+// DEPRECATED — use /api/doctor/* (doctorPortal) and /api/auth/* instead
+// app.use('/api/doctor', doctorRouter)
+
+// DEPRECATED — use /api/auth/* instead
+// app.use('/api/user', userRouter)
 
 app.use('/api/ai', aiRouter)
 
-app.use('/api/assistant', assistantRouter)
+// DEPRECATED — use /api/assistant/* (assistantPortal) instead
+// app.use('/api/assistant', assistantRouter)
 
 
 
@@ -204,5 +217,3 @@ if (process.env.VERCEL !== '1') {
 
 
 export default app
-
-

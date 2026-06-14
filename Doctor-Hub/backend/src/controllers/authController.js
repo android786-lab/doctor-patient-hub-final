@@ -32,9 +32,24 @@ import {
 
   markResetTokenUsed,
 
+  POST_OTP_RESET_MINUTES,
+
 } from '../utils/passwordResetRows.js'
 
-import { sendPasswordResetEmail } from '../services/emailService.js'
+import {
+
+  createPasswordResetOtp,
+
+  findValidOtp,
+
+  markOtpUsed,
+
+  invalidateOtpsForUser,
+
+} from '../utils/passwordResetOtpRows.js'
+
+import { sendPasswordResetOtpEmail } from '../services/emailService.js'
+import { extractToken } from '../middleware/authMiddleware.js'
 
 
 
@@ -417,6 +432,45 @@ export async function getMe(req, res) {
 
 
 
+const STAFF_ROLES = new Set(['doctor', 'admin', 'assistant', 'super_admin'])
+
+/** Restore staff JWT from httpOnly cookie (after patient-site login redirect). Token is never put in URLs. */
+export async function staffSession(req, res) {
+  try {
+    const role = req.user?.role
+    if (!STAFF_ROLES.has(role)) {
+      return res.status(403).json({ message: 'Not a staff account' })
+    }
+
+    const token = extractToken(req)
+    if (!token) {
+      return res.status(401).json({ message: 'Authentication required' })
+    }
+
+    const display = await resolveUserDisplay({
+      id: req.user.id,
+      email: req.user.email,
+      role,
+    })
+
+    return res.json({
+      token,
+      user: {
+        id: req.user.id,
+        email: req.user.email,
+        role,
+        name: display.name,
+        full_name: display.name,
+      },
+    })
+  } catch (err) {
+    console.error('staffSession:', err)
+    return res.status(500).json({ message: err.message || 'Could not restore session' })
+  }
+}
+
+
+
 export async function updateMyProfile(req, res) {
 
   try {
@@ -601,53 +655,73 @@ export async function forgotPassword(req, res) {
 
 
 
-    const { token } = await createPasswordResetToken(user.id)
-
-    const resetUrl = `${frontendBaseUrl()}/auth/reset-password?token=${encodeURIComponent(token)}`
+    const { otp, expiresInMinutes } = await createPasswordResetOtp(user.id, normalized)
 
 
 
     const display = await resolveUserDisplay(user)
 
-    const emailResult = await sendPasswordResetEmail({
+    const emailResult = await sendPasswordResetOtpEmail({
 
       to: normalized,
 
-      resetUrl,
+      otp,
 
       userName: display.name,
+
+      expiresInMinutes,
 
     })
 
 
 
-    const payload = {
+    if (!emailResult.sent) {
 
-      message: emailResult.sent
+      const isDev = process.env.NODE_ENV !== 'production'
 
-        ? 'Password reset link sent to your email'
+      if (isDev) {
 
-        : 'Password reset link generated. Check server logs if email is not configured.',
+        const payload = {
+
+          message: 'Email could not be sent. Use the dev code below (check server logs).',
+
+          expiresInMinutes,
+
+          devOtp: emailResult.devOtp || otp,
+
+        }
+
+        return res.json(payload)
+
+      }
+
+      await invalidateOtpsForUser(user.id)
+
+      return res.status(503).json({
+
+        message:
+
+          'We could not send the reset code to your email. Please try again in a few minutes or contact the hospital help desk.',
+
+      })
 
     }
 
 
 
-    if (!emailResult.sent && process.env.NODE_ENV !== 'production') {
+    return res.json({
 
-      payload.devResetUrl = resetUrl
+      message: 'A 6-digit reset code was sent to your email',
 
-    }
+      expiresInMinutes,
 
-
-
-    return res.json(payload)
+    })
 
   } catch (err) {
 
     console.error('forgotPassword:', err)
 
-    if (/password_reset_tokens|relation.*does not exist/i.test(err.message || '')) {
+    if (/password_reset_otps|password_reset_tokens|relation.*does not exist/i.test(err.message || '')) {
 
       return res.status(500).json({
 
@@ -657,7 +731,61 @@ export async function forgotPassword(req, res) {
 
     }
 
-    return res.status(500).json({ message: err.message || 'Request failed' })
+    return res.status(500).json({ message: 'Could not process password reset. Please try again.' })
+
+  }
+
+}
+
+
+
+export async function verifyOtp(req, res) {
+
+  try {
+
+    const { email, otp } = req.body
+
+    const normalized = email?.toLowerCase?.().trim()
+
+
+
+    const row = await findValidOtp(normalized, otp)
+
+    if (!row) {
+
+      return res.status(400).json({ message: 'Invalid or expired code. Request a new one.' })
+
+    }
+
+
+
+    await markOtpUsed(row.id)
+
+
+
+    const { token } = await createPasswordResetToken(row.user_id, {
+
+      expiryMinutes: POST_OTP_RESET_MINUTES,
+
+    })
+
+
+
+    return res.json({
+
+      reset_token: token,
+
+      expiresInMinutes: POST_OTP_RESET_MINUTES,
+
+      message: 'Code verified. Set your new password.',
+
+    })
+
+  } catch (err) {
+
+    console.error('verifyOtp:', err)
+
+    return res.status(500).json({ message: err.message || 'Could not verify code' })
 
   }
 
@@ -669,7 +797,9 @@ export async function resetPassword(req, res) {
 
   try {
 
-    const { token, password, confirm_password } = req.body
+    const { token, reset_token, password, confirm_password } = req.body
+
+    const resetToken = reset_token || token
 
 
 
@@ -681,11 +811,11 @@ export async function resetPassword(req, res) {
 
 
 
-    const row = await findValidResetToken(token)
+    const row = await findValidResetToken(resetToken)
 
     if (!row) {
 
-      return res.status(400).json({ message: 'Invalid or expired reset link. Request a new one.' })
+      return res.status(400).json({ message: 'Invalid or expired reset session. Request a new code.' })
 
     }
 
@@ -731,7 +861,7 @@ export async function validateResetToken(req, res) {
 
   try {
 
-    const token = req.query.token || req.body?.token
+    const token = req.query.token || req.query.reset_token || req.body?.token || req.body?.reset_token
 
     if (!token) {
 
@@ -743,7 +873,7 @@ export async function validateResetToken(req, res) {
 
     if (!row) {
 
-      return res.json({ valid: false, message: 'Invalid or expired reset link' })
+      return res.json({ valid: false, message: 'Invalid or expired reset session' })
 
     }
 

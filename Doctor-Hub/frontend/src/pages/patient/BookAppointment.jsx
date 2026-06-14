@@ -429,7 +429,7 @@ export default function BookAppointment() {
       } else {
         toast.error(payData?.message || 'Payment upload failed')
         try {
-          await api.post('/user/cancel-appointment', { appointmentId: createdAppointmentId })
+          await api.post('/appointments/cancel', { appointmentId: createdAppointmentId })
         } catch {
           /* best effort */
         }
@@ -444,7 +444,7 @@ export default function BookAppointment() {
       await refreshSlots(docId, docInfo)
       if (createdAppointmentId) {
         try {
-          await api.post('/user/cancel-appointment', { appointmentId: createdAppointmentId })
+          await api.post('/appointments/cancel', { appointmentId: createdAppointmentId })
         } catch {
           /* best effort */
         }

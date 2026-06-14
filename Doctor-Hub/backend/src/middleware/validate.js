@@ -73,9 +73,16 @@ export const schemas = {
   },
   resetPassword: {
     body: {
-      token: { required: true, minLength: 32 },
+      reset_token: { minLength: 32 },
+      token: { minLength: 32 },
       password: { required: true, minLength: 6 },
       confirm_password: { required: true, minLength: 6 },
+    },
+  },
+  verifyOtp: {
+    body: {
+      email: { required: true, email: true },
+      otp: { required: true, minLength: 6, maxLength: 6 },
     },
   },
   register: {

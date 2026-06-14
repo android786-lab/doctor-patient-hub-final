@@ -1,3 +1,4 @@
+// DEPRECATED — use /api/assistant/* (assistantPortal) instead.
 import express from 'express'
 import authAdmin from '../middlewares/authAdmin.js'
 import {

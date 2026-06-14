@@ -32,7 +32,7 @@ api.interceptors.response.use(
     const raw = error.response?.data?.message || error.message
     const message = friendlyAuthMessage(raw)
 
-    const isAuthRoute = /\/auth\/(login|register|forgot-password)/.test(error.config?.url || '')
+    const isAuthRoute = /\/auth\/(login|register|forgot-password|verify-otp)/.test(error.config?.url || '')
     if (
       !isAuthRoute &&
       (error.response?.status === 401 || error.response?.data?.code === 'AUTH_INVALID')

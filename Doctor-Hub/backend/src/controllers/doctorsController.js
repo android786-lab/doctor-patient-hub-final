@@ -9,6 +9,7 @@ import {
 } from '../utils/doctorRows.js'
 import { attachSchedulesFromTable, fetchDoctorSchedule } from '../utils/doctorScheduleRows.js'
 import { fetchDateSchedules } from '../utils/doctorScheduleDateRows.js'
+import { upsertAssistantAssignment } from '../utils/authUserRows.js'
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
@@ -178,5 +179,23 @@ export async function listDoctorsLegacy(req, res) {
   } catch (err) {
     console.error('listDoctorsLegacy:', err)
     return res.status(500).json({ success: false, message: err.message })
+  }
+}
+
+export async function assignAssistantToDoctor(req, res) {
+  try {
+    const doctorId = req.params.id
+    const assistantUserId = req.body.assistant_id
+
+    await upsertAssistantAssignment(assistantUserId, doctorId)
+
+    return res.status(201).json({
+      message: 'Assistant assigned',
+      doctor_id: doctorId,
+      assistant_id: assistantUserId,
+    })
+  } catch (err) {
+    console.error('assignAssistantToDoctor:', err)
+    return res.status(500).json({ message: err.message || 'Failed to assign assistant' })
   }
 }

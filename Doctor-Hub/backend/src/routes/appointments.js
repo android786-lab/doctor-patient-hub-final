@@ -65,6 +65,15 @@ router.get('/doctor', authDoctor, appointmentsDoctor)
 router.post('/doctor/cancel', authDoctor, doctorCancel)
 router.post('/doctor/complete', authDoctor, appointmentComplete)
 
+/** REST-style doctor actions (appointment id in URL) */
+function injectAppointmentIdFromParams(req, _res, next) {
+  if (!req.body) req.body = {}
+  if (req.params.id) req.body.appointmentId = req.params.id
+  next()
+}
+router.patch('/:id/complete', authDoctor, injectAppointmentIdFromParams, appointmentComplete)
+router.patch('/:id/cancel', authDoctor, injectAppointmentIdFromParams, doctorCancel)
+
 router.get('/admin', authAdmin, appointmentsAdmin)
 router.post('/admin/cancel', authAdmin, adminCancel)
 

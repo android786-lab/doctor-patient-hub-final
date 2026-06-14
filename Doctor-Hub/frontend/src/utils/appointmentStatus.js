@@ -3,6 +3,13 @@ export function getAppointmentStatus(item) {
   if (item.is_completed) return { label: 'Completed', tone: 'green' }
   if (item.status === 'confirmed') return { label: 'Confirmed', tone: 'green' }
   if (
+    item.status === 'pending_payment' &&
+    !item.payment_proof_url &&
+    item.payment_reference
+  ) {
+    return { label: 'Payment rejected — re-upload proof', tone: 'red' }
+  }
+  if (
     item.status === 'payment_uploaded' ||
     (item.status === 'awaiting_verification' && item.payment_proof_url)
   ) {

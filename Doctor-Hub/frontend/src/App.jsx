@@ -1,5 +1,7 @@
 import { lazy, Suspense } from 'react'
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
+import { AnimatePresence } from 'framer-motion'
+import { PageTransition } from './components/animations'
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 
@@ -84,12 +86,13 @@ function PatientLayout({ children, hideFooter = false, portal = false }) {
   )
 }
 
-export default function App() {
+function AppRoutes() {
+  const location = useLocation()
+
   return (
-    <div className="min-h-screen">
-      <ToastContainer />
-      <Suspense fallback={<PageLoader />}>
-      <Routes>
+    <AnimatePresence mode="wait">
+      <Suspense fallback={<PageLoader />} key={location.pathname}>
+      <Routes location={location}>
         {/* Module 1 — auth */}
         <Route path="/auth/login" element={<AuthLayout><Login /></AuthLayout>} />
         <Route path="/auth/register" element={<AuthLayout><Register /></AuthLayout>} />
@@ -230,7 +233,9 @@ export default function App() {
           path="/"
           element={
             <PatientLayout>
-              <Home />
+              <PageTransition>
+                <Home />
+              </PageTransition>
             </PatientLayout>
           }
         />
@@ -310,6 +315,15 @@ export default function App() {
         <Route path="*" element={<NotFound />} />
       </Routes>
       </Suspense>
+    </AnimatePresence>
+  )
+}
+
+export default function App() {
+  return (
+    <div className="min-h-screen">
+      <ToastContainer />
+      <AppRoutes />
     </div>
   )
 }
