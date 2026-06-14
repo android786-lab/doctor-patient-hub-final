@@ -14,7 +14,7 @@ function StarRating({ experience }) {
   const score = Math.min(5, 3.5 + Math.min(years, 15) * 0.1)
 
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex shrink-0 items-center gap-1">
       <div className="flex text-amber-400">
         {[1, 2, 3, 4, 5].map((i) => (
           <svg
@@ -108,32 +108,26 @@ function DoctorCard({ doctor: rawDoctor, patientPortal = false }) {
   const qualification = [doctor.degree, doctor.experience].filter(Boolean).join(' · ')
 
   return (
-    <article className="dh-doctor-card group">
-      <div className="dh-doctor-card__inner">
-        {/* Info — left (reference card style) */}
-        <div className="flex min-w-0 flex-1 flex-col">
+    <article className="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-sm transition hover:border-teal-200 hover:shadow-md">
+      <div className="flex flex-row items-start gap-3 p-3 sm:gap-4 sm:p-4">
+        {/* Info — left */}
+        <div className="min-w-0 flex-1 basis-0">
           <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0">
-              <h3 className="truncate font-display text-[0.9375rem] font-bold text-slate-900 sm:text-base">
+            <div className="min-w-0 flex-1">
+              <h3 className="truncate font-display text-sm font-bold text-slate-900 sm:text-base">
                 {displayDoctorName(doctor.name)}
               </h3>
-              <p className="mt-0.5 truncate text-xs font-semibold text-teal-700 sm:text-sm">
-                {doctor.speciality}
-              </p>
+              <p className="mt-0.5 truncate text-xs font-semibold text-teal-700">{doctor.speciality}</p>
               <div className="mt-1.5 h-0.5 w-10 rounded-full bg-gradient-to-r from-teal-500 to-teal-300" />
             </div>
             <StarRating experience={doctor.experience} />
           </div>
 
-          <ul className="mt-2.5 space-y-1.5">
-            {qualification && (
-              <MetaRow icon={icons.degree}>{qualification}</MetaRow>
-            )}
-            {loc && (
-              <MetaRow icon={icons.location}>{loc}</MetaRow>
-            )}
+          <ul className="mt-2 space-y-1.5">
+            {qualification && <MetaRow icon={icons.degree}>{qualification}</MetaRow>}
+            {loc && <MetaRow icon={icons.location}>{loc}</MetaRow>}
             <MetaRow icon={icons.status}>
-              {doctor.available ? 'Available for booking today' : 'Currently fully booked'}
+              {doctor.available ? 'Available for booking' : 'Fully booked'}
             </MetaRow>
           </ul>
 
@@ -160,30 +154,32 @@ function DoctorCard({ doctor: rawDoctor, patientPortal = false }) {
             </div>
           )}
 
-          <div className="mt-auto flex items-end justify-between gap-2 border-t border-slate-100 pt-3">
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-                Consultation
-              </p>
-              <p className="font-display text-lg font-bold text-slate-900 sm:text-xl">
-                {formatMoney(doctor.fees)}
-              </p>
+          <div className="mt-3 flex items-end justify-between gap-2 border-t border-slate-100 pt-3">
+            <div className="min-w-0">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Fee</p>
+              <p className="font-display text-lg font-bold text-slate-900">{formatMoney(doctor.fees)}</p>
             </div>
             <button
               type="button"
               onClick={goBook}
               disabled={!doctor.available}
-              className="rounded-xl bg-gradient-to-r from-teal-600 to-teal-700 px-3.5 py-2 text-xs font-semibold text-white shadow-sm shadow-teal-600/25 transition hover:from-teal-700 hover:to-teal-800 disabled:from-slate-300 disabled:to-slate-300 disabled:shadow-none"
+              className="shrink-0 rounded-xl bg-teal-600 px-3 py-2 text-xs font-semibold text-white hover:bg-teal-700 disabled:bg-slate-300"
             >
               Book slot
             </button>
           </div>
         </div>
 
-        {/* Photo — right with accent frame */}
-        <div className="dh-doctor-card__photo-frame shrink-0">
-          <span className="dh-doctor-card__photo-accent dh-doctor-card__photo-accent--tl" aria-hidden />
-          <span className="dh-doctor-card__photo-accent dh-doctor-card__photo-accent--br" aria-hidden />
+        {/* Photo — fixed square, right side */}
+        <div className="relative flex-none shrink-0 self-start">
+          <span
+            className="pointer-events-none absolute -left-0.5 -top-0.5 z-10 h-6 w-6 rounded-tl-lg border-l-[3px] border-t-[3px] border-teal-500"
+            aria-hidden
+          />
+          <span
+            className="pointer-events-none absolute -bottom-0.5 -right-0.5 z-10 h-6 w-6 rounded-br-lg border-b-[3px] border-r-[3px] border-teal-500"
+            aria-hidden
+          />
           <DoctorPhoto
             src={doctor.image}
             name={doctor.name}
