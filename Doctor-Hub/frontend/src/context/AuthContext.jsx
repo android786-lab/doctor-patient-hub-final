@@ -64,9 +64,14 @@ export function AuthProvider({ children }) {
 
   const getDoctorsData = useCallback(async () => {
     try {
-      const { data } = await api.get('/doctor/list')
-      if (data.success) setDoctors(data.doctors)
-      else if (data.message) toast.error(friendlyUserMessage(data.message))
+      const { data } = await api.get('/doctors/legacy/list')
+      if (data?.success && Array.isArray(data.doctors)) {
+        setDoctors(data.doctors)
+      } else if (Array.isArray(data)) {
+        setDoctors(data)
+      } else if (data?.message) {
+        toast.error(friendlyUserMessage(data.message))
+      }
     } catch (error) {
       if (!error.isAuthError && !error.isNetworkError) {
         toast.error(friendlyUserMessage(error.message))
